@@ -4,7 +4,7 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Entry System</title>
+  <title>Order Entry & Reporting System</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -17,6 +17,17 @@
       margin-right: auto;
     }
     h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
+    h3 { color: #5f6368; font-size: 1.1rem; border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top: 30px;}
+    
+    .panel {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    /* 輸入區樣式 */
     .item-row {
       display: grid;
       grid-template-columns: 130px 100px 1fr 80px 100px 70px 40px;
@@ -27,10 +38,10 @@
     @media (max-width: 768px) {
       .item-row {
         grid-template-columns: 1fr 1fr;
-        background: #fff;
+        background: #f8f9fa;
         padding: 10px;
         border-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #eee;
         margin-bottom: 15px;
       }
     }
@@ -46,6 +57,8 @@
       border-color: #1a73e8;
       outline: none;
     }
+    
+    /* 按鈕樣式 */
     .btn {
       background-color: #1a73e8;
       color: white;
@@ -59,14 +72,39 @@
     .btn-danger { background-color: #d93025; }
     .btn-danger:hover { background-color: #a51d18; }
     .btn-secondary { background-color: #5f6368; }
+    .btn-success { background-color: #34a853; }
     .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
-    
-    .panel {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
+
+    /* 歷史紀錄表格樣式 */
+    .history-table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+    table.history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table.history-table th, table.history-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    table.history-table th { background: #f1f3f4; color: #555; }
+    .thumb-img {
+      max-height: 40px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Loading Overlay */
+    #loadingOverlay {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.8);
+      z-index: 999;
+      justify-content: center; align-items: center;
+      font-size: 18px; font-weight: bold; color: #1a73e8;
     }
 
     /* 預覽 Modal 樣式 */
@@ -91,66 +129,77 @@
       overflow: auto;
       text-align: center;
     }
-    .close-btn {
-      position: absolute;
-      top: 10px; right: 15px;
-      background: none; border: none;
-      font-size: 24px; font-weight: bold;
-      cursor: pointer; color: #333;
+    .close-btn, .share-btn {
+      position: absolute; top: 10px; background: none; border: none; cursor: pointer;
     }
-    .share-btn {
-      position: absolute;
-      top: 10px; left: 15px;
-      background: none; border: none;
-      cursor: pointer; padding: 4px;
-    }
+    .close-btn { right: 15px; font-size: 24px; font-weight: bold; color: #333; }
+    .share-btn { left: 15px; padding: 4px; }
     .share-btn svg { width: 22px; height: 22px; fill: #5f6368; }
     .share-btn:hover svg { fill: #1a73e8; }
     
     #canvasResultImg {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #ddd;
-      cursor: zoom-in;
-      transition: transform 0.3s ease;
+      max-width: 100%; height: auto; border: 1px solid #ddd;
+      cursor: zoom-in; transition: transform 0.3s ease;
     }
     #canvasResultImg.fullscreen {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      object-fit: contain;
-      background: rgba(0,0,0,0.95);
-      cursor: zoom-out;
-      z-index: 2000;
-      padding: 20px;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      object-fit: contain; background: rgba(0,0,0,0.95);
+      cursor: zoom-out; z-index: 2000; padding: 20px;
     }
   </style>
-  <!-- 引入 html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
+  
+  <div id="loadingOverlay">處理中，請稍候...</div>
 
+  <!-- 上半部：新增訂單 -->
   <div class="panel">
-    <h2>Order Entry System</h2>
+    <h2>1. 新增訂貨紀錄</h2>
     <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 15px;">
       <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
       <button class="btn btn-secondary" onclick="document.getElementById('imageInput').click()">上傳產品截圖</button>
-      <span id="uploadStatus" style="font-size: 13px; color: #666;">未選擇圖片 (Image ID: 無)</span>
+      <span id="uploadStatus" style="font-size: 13px; color: #666;">未選擇圖片</span>
     </div>
 
-    <div id="itemsContainer">
-      <!-- 動態品項列 -->
-    </div>
+    <div id="itemsContainer"></div>
 
     <div class="actions">
       <button class="btn" onclick="addItemRow()">＋ 增加品項</button>
-      <button class="btn" style="background-color: #34a853;" onclick="generatePreview()">產生預覽與送出</button>
+      <button class="btn btn-success" onclick="saveToSheets()">儲存至試算表</button>
     </div>
   </div>
 
-  <!-- 商業風格隱藏渲染區塊 (供產生預覽圖片) -->
-  <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+  <!-- 下半部：歷史紀錄列表 -->
+  <div class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #ddd; padding-bottom: 5px;">
+      <h2 style="margin: 0; color: #333;">2. 訂貨紀錄列表</h2>
+      <button class="btn btn-success" style="padding: 6px 12px; font-size: 13px;" onclick="generateSelectedPreview()">產生選取報表</button>
+    </div>
     
-    <!-- 表頭：大標題與日期/姓名 -->
+    <div class="history-table-wrapper">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th style="width: 30px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Disc</th>
+            <th>Total</th>
+            <th>Image</th>
+          </tr>
+        </thead>
+        <tbody id="historyTbody">
+          <tr><td colspan="8" style="text-align:center;">載入中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 報表渲染區 (不可見) -->
+  <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
       <div style="text-align: right; font-size: 14px; color: #555; line-height: 1.6;">
@@ -159,7 +208,6 @@
       </div>
     </div>
 
-    <!-- 項目表格 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
@@ -169,12 +217,9 @@
           <th style="padding: 10px 4px; text-align: right; width: 100px;">Amount</th>
         </tr>
       </thead>
-      <tbody id="reportTbody">
-        <!-- 動態列會插入這裡 -->
-      </tbody>
+      <tbody id="reportTbody"></tbody>
     </table>
 
-    <!-- 總計區塊 -->
     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
       <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
         <tr style="color: #27ae60;">
@@ -188,8 +233,7 @@
       </table>
     </div>
 
-    <!-- 截圖位置 -->
-    <div id="reportImages" style="margin-top: 30px; text-align: center;"></div>
+    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 10px;"></div>
   </div>
 
   <!-- 預覽 Modal -->
@@ -199,7 +243,7 @@
         <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
       </button>
       <button class="close-btn" onclick="closePreview()">×</button>
-      <h3 style="margin-top: 5px; margin-bottom: 15px; font-size: 16px; color: #555;">Image Preview (Double click to zoom)</h3>
+      <h3 style="margin-top: 5px; margin-bottom: 15px; font-size: 16px; color: #555;">Image Preview</h3>
       <div style="display: inline-block;">
         <img id="canvasResultImg" alt="Preview">
       </div>
@@ -207,17 +251,24 @@
   </div>
 
   <script>
-    // 💡 請確保這裡替換為您的正確 Web App 網址
+    // 🔴 請確保這裡替換為您的正確 Web App 網址 🔴
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwD3D6dtItQ3uawXAHWr6HFXFKaZPjheN8O2-b3H9VugD30khFiNJQ3GqawONZ5tKD1/exec";
 
     let currentImageId = "";
     let currentImageUrl = "";
     let generatedCanvasDataUrl = "";
+    let allOrdersData = [];
 
     window.onload = function() {
       addItemRow();
+      fetchOrders();
     };
 
+    function showLoading(show) {
+      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+    }
+
+    // --- 輸入區邏輯 ---
     function addItemRow() {
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
@@ -267,61 +318,35 @@
         reader.onload = function(e) {
           fetch(GAS_WEB_APP_URL, {
             method: 'POST',
-            body: JSON.stringify({
-              action: 'uploadImage',
-              base64: e.target.result,
-              mimeType: file.type,
-              fileName: file.name
-            })
-          })
-          .then(res => res.json())
-          .then(res => {
+            body: JSON.stringify({ action: 'uploadImage', base64: e.target.result, mimeType: file.type, fileName: file.name })
+          }).then(res => res.json()).then(res => {
             if (res.success) {
               currentImageId = res.fileId;
               currentImageUrl = res.url;
-              document.getElementById('uploadStatus').innerText = `已上傳 (ID: ${res.fileId})`;
+              document.getElementById('uploadStatus').innerHTML = `<span style="color:green;">已上傳 ✔</span>`;
             } else {
-              document.getElementById('uploadStatus').innerText = '上傳失敗: ' + res.error;
+              document.getElementById('uploadStatus').innerText = '失敗: ' + res.error;
             }
-          })
-          .catch(err => {
-            document.getElementById('uploadStatus').innerText = '錯誤: ' + err.message;
           });
         };
         reader.readAsDataURL(file);
       }
     }
 
-    function generatePreview() {
+    function saveToSheets() {
       const rows = document.querySelectorAll('.item-row');
-      const reportTbody = document.getElementById('reportTbody');
-      reportTbody.innerHTML = '';
-      
       const dataList = [];
       let isValid = true;
-      
-      let grandTotal = 0;
-      let grandSaved = 0;
-
-      // 提取表頭所需的日期與名字 (以第一筆為主)
-      if(rows.length > 0) {
-        const mainDate = rows[0].querySelector('.item-date').value;
-        const mainName = rows[0].querySelector('.item-name').value;
-        document.getElementById('reportDate').innerText = `Date: ${mainDate}`;
-        document.getElementById('reportName').innerText = `${mainName}`;
-      }
 
       rows.forEach(row => {
         const date = row.querySelector('.item-date').value;
         const name = row.querySelector('.item-name').value;
-        const itemName = row.querySelector('.item-item').value;
+        let itemName = row.querySelector('.item-item').value;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const discount = row.querySelector('.item-discount').value;
         const qty = parseInt(row.querySelector('.item-qty').value) || 1;
 
-        if (!itemName || price === 0) {
-          isValid = false;
-        }
+        if (!itemName || price === 0) isValid = false;
 
         let discountRate = 1.0;
         if (discount === '75%') discountRate = 0.75;
@@ -329,126 +354,171 @@
         else if (discount === '90%') discountRate = 0.90;
 
         const unitDiscountPrice = Math.round(price * discountRate);
-        const unitSaved = price - unitDiscountPrice;
         
-        // 該列的總額與省下金額
-        const rowTotal = unitDiscountPrice * qty;
-        const rowSaved = unitSaved * qty;
+        // 品名加上數量標籤
+        if(qty > 1) itemName = `${itemName} (x${qty})`;
 
-        // 累加至總和
-        grandTotal += rowTotal;
-        grandSaved += rowSaved;
-
-        // 推入準備傳給 GAS 的資料 (維持完整數據)
         dataList.push({
-          date: date,
-          name: name,
-          itemName: itemName,
-          price: price,
-          discount: discount,
-          discountPrice: unitDiscountPrice,
-          savedAmount: rowSaved,
-          total: rowTotal,
-          imageId: currentImageId
+          date: date, name: name, itemName: itemName, price: price, discount: discount,
+          discountPrice: unitDiscountPrice, savedAmount: (price - unitDiscountPrice) * qty,
+          total: unitDiscountPrice * qty, imageId: currentImageId, imageUrl: currentImageUrl
         });
+      });
 
-        // 處理顯示字樣 (數量>1才顯示)
-        const displayItemName = qty > 1 ? `${itemName} (x${qty})` : itemName;
-        const displayDiscount = discount === '無' ? '-' : discount;
+      if (!isValid) { alert('請填寫完整的品名與價格'); return; }
 
-        // 建立表格的列 (TR)
+      showLoading(true);
+      fetch(GAS_WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveOrders', orders: dataList })
+      }).then(res => res.json()).then(res => {
+        showLoading(false);
+        if (res.success) {
+          alert('儲存成功！');
+          // 重置輸入區圖片
+          currentImageId = ""; currentImageUrl = ""; document.getElementById('uploadStatus').innerText = '未選擇圖片';
+          // 重新載入列表
+          fetchOrders();
+        } else {
+          alert('儲存失敗：' + res.error);
+        }
+      });
+    }
+
+    // --- 歷史紀錄與報表邏輯 ---
+    function fetchOrders() {
+      fetch(GAS_WEB_APP_URL + "?action=getOrders")
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            allOrdersData = res.data;
+            renderHistoryTable();
+          }
+        }).catch(err => {
+          document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`;
+        });
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTbody');
+      tbody.innerHTML = '';
+      if(allOrdersData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">無歷史紀錄</td></tr>`;
+        return;
+      }
+
+      allOrdersData.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        const imgHtml = item["Image URL"] ? `<a href="${item["Image URL"]}" target="_blank">圖片</a>` : '-';
+        tr.innerHTML = `
+          <td><input type="checkbox" class="row-check" value="${index}"></td>
+          <td>${item.Date || ''}</td>
+          <td>${item.Name || ''}</td>
+          <td>${item.Item || ''}</td>
+          <td>$${item.Price || 0}</td>
+          <td>${item.Discount || '-'}</td>
+          <td><b>$${item.Total || 0}</b></td>
+          <td>${imgHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleSelectAll(source) {
+      checkboxes = document.querySelectorAll('.row-check');
+      for (var i = 0, n = checkboxes.length; i < n; i++) {
+        checkboxes[i].checked = source.checked;
+      }
+    }
+
+    function generateSelectedPreview() {
+      const selectedChecks = document.querySelectorAll('.row-check:checked');
+      if(selectedChecks.length === 0) {
+        alert('請先勾選要產生報表的項目'); return;
+      }
+
+      const reportTbody = document.getElementById('reportTbody');
+      reportTbody.innerHTML = '';
+      
+      let grandTotal = 0;
+      let grandSaved = 0;
+      let imagesSet = new Set(); // 用於收集不重複的圖片網址
+
+      // 取第一筆的日期名字當表頭
+      const firstIdx = selectedChecks[0].value;
+      document.getElementById('reportDate').innerText = `Date: ${allOrdersData[firstIdx].Date}`;
+      document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
+
+      selectedChecks.forEach(check => {
+        const item = allOrdersData[check.value];
+        
+        grandTotal += parseFloat(item.Total) || 0;
+        grandSaved += parseFloat(item.Saved) || 0;
+
+        if (item["Image URL"]) imagesSet.add(item["Image URL"]);
+
+        const displayDiscount = item.Discount === '無' ? '-' : item.Discount;
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #ecf0f1';
         tr.innerHTML = `
-          <td style="padding: 12px 4px; color: #333;">${displayItemName}</td>
-          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${price}</td>
+          <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
+          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
           <td style="padding: 12px 4px; text-align: right; color: #e74c3c;">${displayDiscount}</td>
-          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${rowTotal}</td>
+          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${item.Total}</td>
         `;
         reportTbody.appendChild(tr);
       });
 
-      if (!isValid) {
-        alert('請填寫完整的品名與價格');
-        return;
-      }
-
-      // 更新下方總金額
       document.getElementById('reportSaved').innerText = `$${grandSaved}`;
       document.getElementById('reportTotal').innerText = `$${grandTotal}`;
 
-      // 處理截圖 (放置於最底下)
+      // 載入截圖 (支援多張)
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
-      if (currentImageUrl) {
+      imagesSet.forEach(url => {
         const img = document.createElement('img');
-        img.src = currentImageUrl;
-        img.style.maxHeight = '250px'; // 稍微放大截圖以符合版面
+        img.src = url;
+        img.style.maxHeight = '250px';
         img.style.maxWidth = '100%';
         img.style.borderRadius = '6px';
         img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        img.crossOrigin = "anonymous"; // 允許 html2canvas 截圖
         reportImages.appendChild(img);
-      }
-
-      // 傳送資料至 GAS 寫入 Google 試算表
-      fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'saveOrders',
-          orders: dataList
-        })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (!res.success) {
-          console.error('寫入試算表失敗：', res.error);
-        }
       });
 
-      // 透過 html2canvas 產生預覽圖
-      const renderArea = document.getElementById('renderArea');
-      html2canvas(renderArea, { scale: 2, useCORS: true }).then(canvas => {
-        generatedCanvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
-        document.getElementById('previewModal').style.display = 'flex';
-      });
+      // 必須等圖片載入完再截圖
+      setTimeout(() => {
+        showLoading(true);
+        const renderArea = document.getElementById('renderArea');
+        html2canvas(renderArea, { scale: 2, useCORS: true }).then(canvas => {
+          showLoading(false);
+          generatedCanvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
+          document.getElementById('previewModal').style.display = 'flex';
+        }).catch(err => {
+          showLoading(false); alert('產生預覽失敗');
+        });
+      }, 1000); // 延遲 1 秒等圖片載入
     }
 
-    function closePreview() {
-      document.getElementById('previewModal').style.display = 'none';
-    }
+    function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
     function shareOrDownloadImage() {
       if (!generatedCanvasDataUrl) return;
-      
-      fetch(generatedCanvasDataUrl)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], "Order_Summary.jpg", { type: "image/jpeg" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              files: [file],
-              title: 'Order Summary',
-              text: 'Here is your order summary.'
-            }).catch(err => console.log('分享取消或失敗', err));
-          } else {
-            const a = document.createElement('a');
-            a.href = generatedCanvasDataUrl;
-            a.download = 'Order_Summary.jpg';
-            a.click();
-          }
-        });
+      fetch(generatedCanvasDataUrl).then(res => res.blob()).then(blob => {
+        const file = new File([blob], "Order_Summary.jpg", { type: "image/jpeg" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'Order Summary' });
+        } else {
+          const a = document.createElement('a'); a.href = generatedCanvasDataUrl;
+          a.download = 'Order_Summary.jpg'; a.click();
+        }
+      });
     }
 
     const resultImg = document.getElementById('canvasResultImg');
-    resultImg.addEventListener('dblclick', function() {
-      this.classList.toggle('fullscreen');
-    });
-    resultImg.addEventListener('click', function() {
-      if (this.classList.contains('fullscreen')) {
-        this.classList.remove('fullscreen');
-      }
-    });
+    resultImg.addEventListener('dblclick', function() { this.classList.toggle('fullscreen'); });
+    resultImg.addEventListener('click', function() { if (this.classList.contains('fullscreen')) this.classList.remove('fullscreen'); });
   </script>
 </body>
 </html>
