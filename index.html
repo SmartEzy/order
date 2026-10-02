@@ -124,7 +124,7 @@
       padding: 20px;
     }
   </style>
-  <!-- 引入 html2canvas 支援前端產生 JPG 預覽圖 -->
+  <!-- 引入 html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -147,26 +147,49 @@
     </div>
   </div>
 
-  <!-- 隱藏的渲染區塊供 html2canvas 產生英文圖表 -->
-  <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 25px; font-family: Arial, sans-serif;">
-    <h3 style="text-align: center; color: #333; margin-bottom: 15px;">Order Summary Report</h3>
-    <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: center;">
+  <!-- 商業風格隱藏渲染區塊 (供產生預覽圖片) -->
+  <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+    
+    <!-- 表頭：大標題與日期/姓名 -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
+      <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
+      <div style="text-align: right; font-size: 14px; color: #555; line-height: 1.6;">
+        <div style="font-weight: bold; color: #333;" id="reportName">Name: </div>
+        <div id="reportDate">Date: </div>
+      </div>
+    </div>
+
+    <!-- 項目表格 -->
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
-        <tr style="background-color: #f1f3f4; color: #333;">
-          <th style="border: 1px solid #ddd; padding: 6px;">Date</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Name</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Item</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Price</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Disc</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Disc.Price</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Saved</th>
-          <th style="border: 1px solid #ddd; padding: 6px;">Total</th>
+        <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
+          <th style="padding: 10px 4px;">Item Description</th>
+          <th style="padding: 10px 4px; text-align: right; width: 90px;">Price</th>
+          <th style="padding: 10px 4px; text-align: right; width: 80px;">Discount</th>
+          <th style="padding: 10px 4px; text-align: right; width: 100px;">Amount</th>
         </tr>
       </thead>
       <tbody id="reportTbody">
+        <!-- 動態列會插入這裡 -->
       </tbody>
     </table>
-    <div id="reportImages" style="margin-top: 15px; text-align: center;"></div>
+
+    <!-- 總計區塊 -->
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+      <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
+        <tr style="color: #27ae60;">
+          <td style="padding: 5px 0;">Total Saved:</td>
+          <td style="padding: 5px 0;" id="reportSaved">0</td>
+        </tr>
+        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;">
+          <td style="padding: 12px 0;">Total:</td>
+          <td style="padding: 12px 0;" id="reportTotal">0</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 截圖位置 -->
+    <div id="reportImages" style="margin-top: 30px; text-align: center;"></div>
   </div>
 
   <!-- 預覽 Modal -->
@@ -184,7 +207,7 @@
   </div>
 
   <script>
-    // 請替換為您的 Google Apps Script Web App 部署網址
+    // 💡 請確保這裡替換為您的正確 Web App 網址
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwD3D6dtItQ3uawXAHWr6HFXFKaZPjheN8O2-b3H9VugD30khFiNJQ3GqawONZ5tKD1/exec";
 
     let currentImageId = "";
@@ -276,6 +299,17 @@
       
       const dataList = [];
       let isValid = true;
+      
+      let grandTotal = 0;
+      let grandSaved = 0;
+
+      // 提取表頭所需的日期與名字 (以第一筆為主)
+      if(rows.length > 0) {
+        const mainDate = rows[0].querySelector('.item-date').value;
+        const mainName = rows[0].querySelector('.item-name').value;
+        document.getElementById('reportDate').innerText = `Date: ${mainDate}`;
+        document.getElementById('reportName').innerText = `${mainName}`;
+      }
 
       rows.forEach(row => {
         const date = row.querySelector('.item-date').value;
@@ -296,9 +330,16 @@
 
         const unitDiscountPrice = Math.round(price * discountRate);
         const unitSaved = price - unitDiscountPrice;
-        const total = unitDiscountPrice * qty;
-        const savedAmount = unitSaved * qty;
+        
+        // 該列的總額與省下金額
+        const rowTotal = unitDiscountPrice * qty;
+        const rowSaved = unitSaved * qty;
 
+        // 累加至總和
+        grandTotal += rowTotal;
+        grandSaved += rowSaved;
+
+        // 推入準備傳給 GAS 的資料 (維持完整數據)
         dataList.push({
           date: date,
           name: name,
@@ -306,21 +347,23 @@
           price: price,
           discount: discount,
           discountPrice: unitDiscountPrice,
-          savedAmount: savedAmount,
-          total: total,
+          savedAmount: rowSaved,
+          total: rowTotal,
           imageId: currentImageId
         });
 
+        // 處理顯示字樣 (數量>1才顯示)
+        const displayItemName = qty > 1 ? `${itemName} (x${qty})` : itemName;
+        const displayDiscount = discount === '無' ? '-' : discount;
+
+        // 建立表格的列 (TR)
         const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #ecf0f1';
         tr.innerHTML = `
-          <td style="border: 1px solid #ddd; padding: 6px;">${date}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${name}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${itemName} (x${qty})</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${price}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${discount}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${unitDiscountPrice}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;">${savedAmount}</td>
-          <td style="border: 1px solid #ddd; padding: 6px;"><b>${total}</b></td>
+          <td style="padding: 12px 4px; color: #333;">${displayItemName}</td>
+          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${price}</td>
+          <td style="padding: 12px 4px; text-align: right; color: #e74c3c;">${displayDiscount}</td>
+          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${rowTotal}</td>
         `;
         reportTbody.appendChild(tr);
       });
@@ -330,14 +373,20 @@
         return;
       }
 
+      // 更新下方總金額
+      document.getElementById('reportSaved').innerText = `$${grandSaved}`;
+      document.getElementById('reportTotal').innerText = `$${grandTotal}`;
+
+      // 處理截圖 (放置於最底下)
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
       if (currentImageUrl) {
         const img = document.createElement('img');
         img.src = currentImageUrl;
-        img.style.maxHeight = '150px';
+        img.style.maxHeight = '250px'; // 稍微放大截圖以符合版面
         img.style.maxWidth = '100%';
-        img.style.borderRadius = '4px';
+        img.style.borderRadius = '6px';
+        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
         reportImages.appendChild(img);
       }
 
@@ -375,17 +424,17 @@
       fetch(generatedCanvasDataUrl)
         .then(res => res.blob())
         .then(blob => {
-          const file = new File([blob], "order_summary.jpg", { type: "image/jpeg" });
+          const file = new File([blob], "Order_Summary.jpg", { type: "image/jpeg" });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             navigator.share({
               files: [file],
               title: 'Order Summary',
-              text: 'Here is your order summary record.'
+              text: 'Here is your order summary.'
             }).catch(err => console.log('分享取消或失敗', err));
           } else {
             const a = document.createElement('a');
             a.href = generatedCanvasDataUrl;
-            a.download = 'order_summary.jpg';
+            a.download = 'Order_Summary.jpg';
             a.click();
           }
         });
