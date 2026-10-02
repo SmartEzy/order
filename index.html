@@ -8,143 +8,84 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f7f9fa;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
+      background-color: #f7f9fa; margin: 0; padding: 20px; color: #333;
+      max-width: 950px; margin-left: auto; margin-right: auto;
     }
     h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
-    h3 { color: #5f6368; font-size: 1.1rem; border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top: 30px;}
-    
-    .panel {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
+    .panel { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-    /* 輸入區樣式 */
+    /* --- 輸入區與拖曳區樣式 --- */
     .item-row {
       display: grid;
-      grid-template-columns: 130px 100px 1fr 80px 100px 70px 40px;
-      gap: 8px;
-      margin-bottom: 10px;
-      align-items: center;
+      /* 新增最左側的 60px 作為圖片拖曳區 */
+      grid-template-columns: 60px 115px 90px 1fr 75px 85px 60px 35px;
+      gap: 8px; margin-bottom: 10px; align-items: center;
     }
     @media (max-width: 768px) {
       .item-row {
-        grid-template-columns: 1fr 1fr;
-        background: #f8f9fa;
-        padding: 10px;
-        border-radius: 6px;
-        border: 1px solid #eee;
-        margin-bottom: 15px;
+        grid-template-columns: 60px 1fr 1fr;
+        background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
       }
-    }
-    input, select {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input:focus, select:focus {
-      border-color: #1a73e8;
-      outline: none;
+      .drop-zone { grid-row: span 2; } /* 手機版讓圖片框跨兩列 */
     }
     
-    /* 按鈕樣式 */
-    .btn {
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
+    input, select {
+      padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;
     }
+    input:focus, select:focus { border-color: #1a73e8; outline: none; }
+    
+    /* 圖片拖曳區塊 */
+    .drop-zone {
+      width: 60px; height: 60px; border: 2px dashed #ccc; border-radius: 6px;
+      display: flex; justify-content: center; align-items: center; cursor: pointer;
+      background-color: #fafafa; background-size: cover; background-position: center;
+      position: relative; overflow: hidden; transition: 0.2s;
+    }
+    .drop-zone.dragover { border-color: #1a73e8; background-color: #e8f0fe; }
+    .drop-text { font-size: 12px; color: #888; text-align: center; pointer-events: none; }
+    .drop-zone.has-image .drop-text { display: none; } /* 有圖片時隱藏文字 */
+    .drop-loading {
+      position: absolute; top:0; left:0; width:100%; height:100%;
+      background: rgba(255,255,255,0.8); display: none;
+      justify-content: center; align-items: center; font-size: 10px; color: #1a73e8;
+    }
+
+    .btn { background-color: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
     .btn:hover { background-color: #1557b0; }
     .btn-danger { background-color: #d93025; }
-    .btn-danger:hover { background-color: #a51d18; }
-    .btn-secondary { background-color: #5f6368; }
     .btn-success { background-color: #34a853; }
     .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
 
     /* 歷史紀錄表格樣式 */
-    .history-table-wrapper {
-      overflow-x: auto;
-      margin-top: 15px;
-    }
-    table.history-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    table.history-table th, table.history-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
+    .history-table-wrapper { overflow-x: auto; margin-top: 15px; }
+    table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.history-table th, table.history-table td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: left; }
     table.history-table th { background: #f1f3f4; color: #555; }
-    .thumb-img {
-      max-height: 40px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    /* Loading Overlay */
+    
     #loadingOverlay {
-      display: none;
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.8);
-      z-index: 999;
-      justify-content: center; align-items: center;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.8); z-index: 999; justify-content: center; align-items: center;
       font-size: 18px; font-weight: bold; color: #1a73e8;
     }
-
+    
     /* 預覽 Modal 樣式 */
     #previewModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;
     }
     .modal-content-wrapper {
-      position: relative;
-      max-width: 90%;
-      max-height: 85vh;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      overflow: auto;
-      text-align: center;
+      position: relative; max-width: 90%; max-height: 85vh; background: #fff; padding: 20px;
+      border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow: auto; text-align: center;
     }
-    .close-btn, .share-btn {
-      position: absolute; top: 10px; background: none; border: none; cursor: pointer;
-    }
+    .close-btn, .share-btn { position: absolute; top: 10px; background: none; border: none; cursor: pointer; }
     .close-btn { right: 15px; font-size: 24px; font-weight: bold; color: #333; }
     .share-btn { left: 15px; padding: 4px; }
     .share-btn svg { width: 22px; height: 22px; fill: #5f6368; }
-    .share-btn:hover svg { fill: #1a73e8; }
     
-    #canvasResultImg {
-      max-width: 100%; height: auto; border: 1px solid #ddd;
-      cursor: zoom-in; transition: transform 0.3s ease;
-    }
+    #canvasResultImg { max-width: 100%; height: auto; border: 1px solid #ddd; cursor: zoom-in; transition: transform 0.3s ease; }
     #canvasResultImg.fullscreen {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      object-fit: contain; background: rgba(0,0,0,0.95);
-      cursor: zoom-out; z-index: 2000; padding: 20px;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain;
+      background: rgba(0,0,0,0.95); cursor: zoom-out; z-index: 2000; padding: 20px;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -156,14 +97,7 @@
   <!-- 上半部：新增訂單 -->
   <div class="panel">
     <h2>1. 新增訂貨紀錄</h2>
-    <div style="display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 15px;">
-      <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
-      <button class="btn btn-secondary" onclick="document.getElementById('imageInput').click()">上傳產品截圖</button>
-      <span id="uploadStatus" style="font-size: 13px; color: #666;">未選擇圖片</span>
-    </div>
-
     <div id="itemsContainer"></div>
-
     <div class="actions">
       <button class="btn" onclick="addItemRow()">＋ 增加品項</button>
       <button class="btn btn-success" onclick="saveToSheets()">儲存至試算表</button>
@@ -176,19 +110,12 @@
       <h2 style="margin: 0; color: #333;">2. 訂貨紀錄列表</h2>
       <button class="btn btn-success" style="padding: 6px 12px; font-size: 13px;" onclick="generateSelectedPreview()">產生選取報表</button>
     </div>
-    
     <div class="history-table-wrapper">
       <table class="history-table">
         <thead>
           <tr>
             <th style="width: 30px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
-            <th>Date</th>
-            <th>Name</th>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Disc</th>
-            <th>Total</th>
-            <th>Image</th>
+            <th>Date</th><th>Name</th><th>Item</th><th>Price</th><th>Disc</th><th>Total</th><th>Image</th>
           </tr>
         </thead>
         <tbody id="historyTbody">
@@ -207,7 +134,6 @@
         <div id="reportDate">Date: </div>
       </div>
     </div>
-
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
@@ -219,43 +145,29 @@
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
-
     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
       <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
-        <tr style="color: #27ae60;">
-          <td style="padding: 5px 0;">Total Saved:</td>
-          <td style="padding: 5px 0;" id="reportSaved">0</td>
-        </tr>
-        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;">
-          <td style="padding: 12px 0;">Total:</td>
-          <td style="padding: 12px 0;" id="reportTotal">0</td>
-        </tr>
+        <tr style="color: #27ae60;"><td style="padding: 5px 0;">Total Saved:</td><td style="padding: 5px 0;" id="reportSaved">0</td></tr>
+        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;"><td style="padding: 12px 0;">Total:</td><td style="padding: 12px 0;" id="reportTotal">0</td></tr>
       </table>
     </div>
-
-    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 10px;"></div>
+    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 15px;"></div>
   </div>
 
   <!-- 預覽 Modal -->
   <div id="previewModal">
     <div class="modal-content-wrapper">
-      <button class="share-btn" onclick="shareOrDownloadImage()" title="分享 / 儲存影像">
-        <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
-      </button>
+      <button class="share-btn" onclick="shareOrDownloadImage()"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></button>
       <button class="close-btn" onclick="closePreview()">×</button>
       <h3 style="margin-top: 5px; margin-bottom: 15px; font-size: 16px; color: #555;">Image Preview</h3>
-      <div style="display: inline-block;">
-        <img id="canvasResultImg" alt="Preview">
-      </div>
+      <div style="display: inline-block;"><img id="canvasResultImg" alt="Preview"></div>
     </div>
   </div>
 
   <script>
-    // 🔴 請確保這裡替換為您的正確 Web App 網址 🔴
+    // 🔴 替換成您的 GAS Web App 網址 🔴
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwD3D6dtItQ3uawXAHWr6HFXFKaZPjheN8O2-b3H9VugD30khFiNJQ3GqawONZ5tKD1/exec";
 
-    let currentImageId = "";
-    let currentImageUrl = "";
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
 
@@ -264,11 +176,9 @@
       fetchOrders();
     };
 
-    function showLoading(show) {
-      document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
-    }
+    function showLoading(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
 
-    // --- 輸入區邏輯 ---
+    // --- 輸入區與拖曳上傳邏輯 ---
     function addItemRow() {
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
@@ -282,17 +192,23 @@
 
       const row = document.createElement('div');
       row.className = 'item-row';
+      // 將圖片 ID 與 URL 綁在這一列的 dataset 中
+      row.dataset.imageId = "";
+      row.dataset.imageUrl = "";
+      
       row.innerHTML = `
+        <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
+          <span class="drop-text">+ 圖片<br>(可拖曳)</span>
+          <div class="drop-loading">上傳中</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+        </div>
         <input type="date" class="item-date" value="${lastDate}" onclick="this.select()">
         <input type="text" class="item-name" placeholder="名字" value="${lastName}" onclick="this.select()">
         <input type="text" class="item-item" placeholder="品名" onclick="this.select()">
         <input type="number" class="item-price" placeholder="價格" onclick="this.select()">
         <select class="item-discount">
-          <option value="75%">75%</option>
-          <option value="85%">85%</option>
-          <option value="90%">90%</option>
-          <option value="無" selected>無</option>
-          <option value="自訂">自訂</option>
+          <option value="75%">75%</option><option value="85%">85%</option><option value="90%">90%</option>
+          <option value="無" selected>無</option><option value="自訂">自訂</option>
         </select>
         <input type="number" class="item-qty" placeholder="數量" value="1" inputmode="numeric" onclick="this.select()">
         <button class="btn btn-danger" onclick="removeRow(this)" style="padding: 10px 0;">×</button>
@@ -301,38 +217,63 @@
     }
 
     function removeRow(btn) {
-      const container = document.getElementById('itemsContainer');
-      if (container.getElementsByClassName('item-row').length > 1) {
+      if (document.getElementsByClassName('item-row').length > 1) {
         btn.parentElement.remove();
-      } else {
-        alert('至少需保留一項');
+      } else { alert('至少需保留一項'); }
+    }
+
+    // 處理拖曳事件
+    function handleDrop(event, dropZone) {
+      event.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (event.dataTransfer.files && event.dataTransfer.files[0]) {
+        uploadFileForDropZone(event.dataTransfer.files[0], dropZone);
       }
     }
 
-    function handleImageUpload(input) {
+    // 處理點擊選擇檔案
+    function handleRowImageUpload(input, dropZone) {
       if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const reader = new FileReader();
-        document.getElementById('uploadStatus').innerText = '上傳中...';
-        
-        reader.onload = function(e) {
-          fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'uploadImage', base64: e.target.result, mimeType: file.type, fileName: file.name })
-          }).then(res => res.json()).then(res => {
-            if (res.success) {
-              currentImageId = res.fileId;
-              currentImageUrl = res.url;
-              document.getElementById('uploadStatus').innerHTML = `<span style="color:green;">已上傳 ✔</span>`;
-            } else {
-              document.getElementById('uploadStatus').innerText = '失敗: ' + res.error;
-            }
-          });
-        };
-        reader.readAsDataURL(file);
+        uploadFileForDropZone(input.files[0], dropZone);
       }
     }
 
+    // 實際執行檔案轉 Base64 與上傳 API
+    function uploadFileForDropZone(file, dropZone) {
+      const row = dropZone.closest('.item-row');
+      const reader = new FileReader();
+      const loading = dropZone.querySelector('.drop-loading');
+      
+      loading.style.display = 'flex'; // 顯示上傳中
+      
+      reader.onload = function(e) {
+        // 先在前端顯示縮圖 (體驗比較好)
+        dropZone.style.backgroundImage = `url(${e.target.result})`;
+        dropZone.classList.add('has-image');
+
+        fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'uploadImage', base64: e.target.result, mimeType: file.type, fileName: file.name })
+        }).then(res => res.json()).then(res => {
+          loading.style.display = 'none';
+          if (res.success) {
+            // 將成功取得的 Google Drive ID 與網址綁定在這一列
+            row.dataset.imageId = res.fileId;
+            row.dataset.imageUrl = res.url;
+          } else {
+            alert('圖片上傳失敗: ' + res.error);
+            dropZone.style.backgroundImage = 'none';
+            dropZone.classList.remove('has-image');
+          }
+        }).catch(err => {
+          loading.style.display = 'none';
+          alert('連線錯誤: ' + err.message);
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 儲存至 Sheets (抓取每一列自己的圖片資料)
     function saveToSheets() {
       const rows = document.querySelectorAll('.item-row');
       const dataList = [];
@@ -345,6 +286,10 @@
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const discount = row.querySelector('.item-discount').value;
         const qty = parseInt(row.querySelector('.item-qty').value) || 1;
+        
+        // 取得該列專屬的圖片資料
+        const rowImageId = row.dataset.imageId || "";
+        const rowImageUrl = row.dataset.imageUrl || "";
 
         if (!itemName || price === 0) isValid = false;
 
@@ -354,14 +299,13 @@
         else if (discount === '90%') discountRate = 0.90;
 
         const unitDiscountPrice = Math.round(price * discountRate);
-        
-        // 品名加上數量標籤
         if(qty > 1) itemName = `${itemName} (x${qty})`;
 
         dataList.push({
           date: date, name: name, itemName: itemName, price: price, discount: discount,
           discountPrice: unitDiscountPrice, savedAmount: (price - unitDiscountPrice) * qty,
-          total: unitDiscountPrice * qty, imageId: currentImageId, imageUrl: currentImageUrl
+          total: unitDiscountPrice * qty, 
+          imageId: rowImageId, imageUrl: rowImageUrl // 各自獨立的圖片
         });
       });
 
@@ -369,56 +313,39 @@
 
       showLoading(true);
       fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'saveOrders', orders: dataList })
+        method: 'POST', body: JSON.stringify({ action: 'saveOrders', orders: dataList })
       }).then(res => res.json()).then(res => {
         showLoading(false);
         if (res.success) {
           alert('儲存成功！');
-          // 重置輸入區圖片
-          currentImageId = ""; currentImageUrl = ""; document.getElementById('uploadStatus').innerText = '未選擇圖片';
-          // 重新載入列表
+          // 儲存後清空輸入區，只留一行空白
+          document.getElementById('itemsContainer').innerHTML = '';
+          addItemRow();
           fetchOrders();
-        } else {
-          alert('儲存失敗：' + res.error);
-        }
+        } else { alert('儲存失敗：' + res.error); }
       });
     }
 
-    // --- 歷史紀錄與報表邏輯 ---
+    // --- 歷史紀錄與產生報表邏輯 (完全相容多張圖片) ---
     function fetchOrders() {
-      fetch(GAS_WEB_APP_URL + "?action=getOrders")
-        .then(res => res.json())
-        .then(res => {
-          if (res.success) {
-            allOrdersData = res.data;
-            renderHistoryTable();
-          }
-        }).catch(err => {
-          document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`;
-        });
+      fetch(GAS_WEB_APP_URL + "?action=getOrders").then(res => res.json()).then(res => {
+        if (res.success) { allOrdersData = res.data; renderHistoryTable(); }
+      }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`; });
     }
 
     function renderHistoryTable() {
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
       if(allOrdersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">無歷史紀錄</td></tr>`;
-        return;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">無歷史紀錄</td></tr>`; return;
       }
-
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         const imgHtml = item["Image URL"] ? `<a href="${item["Image URL"]}" target="_blank">圖片</a>` : '-';
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
-          <td>${item.Date || ''}</td>
-          <td>${item.Name || ''}</td>
-          <td>${item.Item || ''}</td>
-          <td>$${item.Price || 0}</td>
-          <td>${item.Discount || '-'}</td>
-          <td><b>$${item.Total || 0}</b></td>
-          <td>${imgHtml}</td>
+          <td>${item.Date || ''}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
+          <td>$${item.Price || 0}</td><td>${item.Discount || '-'}</td><td><b>$${item.Total || 0}</b></td><td>${imgHtml}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -426,35 +353,29 @@
 
     function toggleSelectAll(source) {
       checkboxes = document.querySelectorAll('.row-check');
-      for (var i = 0, n = checkboxes.length; i < n; i++) {
-        checkboxes[i].checked = source.checked;
-      }
+      for (var i = 0, n = checkboxes.length; i < n; i++) checkboxes[i].checked = source.checked;
     }
 
     function generateSelectedPreview() {
       const selectedChecks = document.querySelectorAll('.row-check:checked');
-      if(selectedChecks.length === 0) {
-        alert('請先勾選要產生報表的項目'); return;
-      }
+      if(selectedChecks.length === 0) { alert('請先勾選要產生報表的項目'); return; }
 
       const reportTbody = document.getElementById('reportTbody');
       reportTbody.innerHTML = '';
       
-      let grandTotal = 0;
-      let grandSaved = 0;
-      let imagesSet = new Set(); // 用於收集不重複的圖片網址
+      let grandTotal = 0; let grandSaved = 0;
+      let imagesSet = new Set(); // 使用 Set 過濾可能重複上傳的網址
 
-      // 取第一筆的日期名字當表頭
       const firstIdx = selectedChecks[0].value;
       document.getElementById('reportDate').innerText = `Date: ${allOrdersData[firstIdx].Date}`;
       document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
 
       selectedChecks.forEach(check => {
         const item = allOrdersData[check.value];
-        
         grandTotal += parseFloat(item.Total) || 0;
         grandSaved += parseFloat(item.Saved) || 0;
-
+        
+        // 收集圖片
         if (item["Image URL"]) imagesSet.add(item["Image URL"]);
 
         const displayDiscount = item.Discount === '無' ? '-' : item.Discount;
@@ -472,21 +393,18 @@
       document.getElementById('reportSaved').innerText = `$${grandSaved}`;
       document.getElementById('reportTotal').innerText = `$${grandTotal}`;
 
-      // 載入截圖 (支援多張)
+      // 載入多張截圖
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
       imagesSet.forEach(url => {
         const img = document.createElement('img');
         img.src = url;
-        img.style.maxHeight = '250px';
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '6px';
-        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        img.crossOrigin = "anonymous"; // 允許 html2canvas 截圖
+        img.style.maxHeight = '200px'; img.style.maxWidth = '100%';
+        img.style.borderRadius = '6px'; img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        img.crossOrigin = "anonymous";
         reportImages.appendChild(img);
       });
 
-      // 必須等圖片載入完再截圖
       setTimeout(() => {
         showLoading(true);
         const renderArea = document.getElementById('renderArea');
@@ -495,10 +413,8 @@
           generatedCanvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
           document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
           document.getElementById('previewModal').style.display = 'flex';
-        }).catch(err => {
-          showLoading(false); alert('產生預覽失敗');
-        });
-      }, 1000); // 延遲 1 秒等圖片載入
+        }).catch(err => { showLoading(false); alert('產生預覽失敗'); });
+      }, 1500); // 稍微延長等待圖片完全載入的時間
     }
 
     function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
@@ -510,8 +426,7 @@
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator.share({ files: [file], title: 'Order Summary' });
         } else {
-          const a = document.createElement('a'); a.href = generatedCanvasDataUrl;
-          a.download = 'Order_Summary.jpg'; a.click();
+          const a = document.createElement('a'); a.href = generatedCanvasDataUrl; a.download = 'Order_Summary.jpg'; a.click();
         }
       });
     }
