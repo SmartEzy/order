@@ -48,6 +48,7 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
+    /* 統一按鈕樣式 */
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
@@ -60,7 +61,7 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格樣式 */
+    /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -137,15 +138,13 @@
       </div>
     </div>
     
-    <!-- 完美對齊表格結構 -->
+    <!-- 完美對齊表格結構：單純的三個欄位，不使用 colspan 破壞結構 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <!-- PRICE 標題置中，設定固定寬度 110px -->
-          <th style="padding: 10px 4px; text-align: center; width: 110px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- DISCOUNT 標題置中，設定固定寬度 140px -->
-          <th style="padding: 10px 4px; text-align: center; width: 140px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <th style="padding: 10px 4px; text-align: center; width: 100px; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <th style="padding: 10px 4px; text-align: center; width: 130px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -155,23 +154,20 @@
         <tr>
           <td></td> 
           
-          <!-- TOTAL 完美置中於 PRICE 欄位下方 -->
+          <!-- TOTAL 完美對齊 Price 欄位，畫上黑線 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <!-- 總額使用同樣的隱形盒子對齊上方的金額 -->
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; vertical-align: top;">
-            <div style="display: flex; justify-content: center; gap: 8px; align-items: center;">
-              <!-- 對應上方折數的空間 35px -->
-              <div style="width: 35px;"></div> 
-              <!-- 總金額 85px 靠右 -->
-              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; width: 85px; text-align: right;" id="reportTotal">$0</div>
+          <!-- 總額對齊 Discount 欄位，畫上黑線 -->
+          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
+            <!-- 隱形小盒子，確保總額與上方的金額在同一條垂直線上 -->
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; width: 120px; margin: 0 auto;">
+              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; text-align: right; width: 85px;" id="reportTotal">$0</div>
             </div>
             <!-- Saved 文字同樣對齊 -->
-            <div style="display: flex; justify-content: center; gap: 8px; align-items: center; margin-top: 4px;">
-              <div style="width: 35px;"></div>
-              <div style="color: #95a5a6; font-size: 12px; width: 85px; text-align: right; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; width: 120px; margin: 0 auto; margin-top: 4px;">
+              <div style="color: #95a5a6; font-size: 12px; text-align: right; width: 85px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
             </div>
           </td>
         </tr>
@@ -511,16 +507,16 @@
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
           
-          <!-- Price 區塊：置中對齊標題，內部數字靠右 -->
-          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
-            <div style="width: 75px; margin: 0 auto; text-align: right;">$${priceStr}</div>
+          <!-- Price 區塊：置中，內部隱形盒子固定 65px 使數字靠右且不會貼齊邊緣 -->
+          <td style="padding: 12px 4px; text-align: center;">
+            <div style="width: 65px; margin: 0 auto; text-align: right; color: #7f8c8d;">$${priceStr}</div>
           </td>
           
-          <!-- Discount 區塊：把折數與折後價包緊緊，並置中於標題下方 -->
-          <td style="padding: 12px 4px;">
-            <div style="display: flex; justify-content: center; gap: 8px; align-items: center;">
-                <div style="width: 35px; text-align: right;">${discountHtml}</div>
-                <div style="font-weight: 600; color: #2c3e50; width: 85px; text-align: right;">$${itemTotalStr}</div>
+          <!-- Discount 區塊：置中，內部隱形盒子固定 120px，緊緊綁定折數與總額 -->
+          <td style="padding: 12px 4px; text-align: center;">
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; width: 120px; margin: 0 auto;">
+                <div style="margin-right: 8px;">${discountHtml}</div>
+                <div style="font-weight: 600; color: #2c3e50; text-align: right; width: 85px;">$${itemTotalStr}</div>
             </div>
           </td>
         `;
