@@ -13,7 +13,7 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入區 --- */
+    /* --- 輸入區樣式 --- */
     .item-row {
       display: grid;
       grid-template-columns: 115px 90px 1fr 75px 85px 60px 35px 60px;
@@ -33,6 +33,7 @@
     }
     input:focus, select:focus { border-color: #5f6368; outline: none; }
     
+    /* 拖曳區 */
     .drop-zone {
       width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -48,10 +49,10 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
+    /* 按鈕樣式 */
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; }
     .btn:hover { background-color: #3c4043; }
     
-    /* SVG 垃圾桶按鈕 */
     .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; }
     .btn-icon:hover { fill: #d93025; }
 
@@ -63,7 +64,7 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格 */
+    /* 歷史紀錄表格樣式 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -120,7 +121,6 @@
           <tr>
             <th style="width: 30px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
             <th>Date</th><th>Name</th><th>Item</th><th>Price</th><th>Disc</th><th>Total</th><th>Image</th>
-            <!-- 新增一欄給刪除按鈕 -->
             <th style="width: 40px; text-align: center;"></th>
           </tr>
         </thead>
@@ -141,26 +141,28 @@
       </div>
     </div>
     
-    <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+    <!-- 1. 利用 border-separate 與 border-spacing 將表頭的底線切開 -->
+    <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 確保底線對齊：將 padding 簡化，統一用 td/th 的 border-bottom -->
-          <th style="padding: 10px 4px; width: 50%; border-bottom: 2px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 4px; text-align: right; width: 25%; border-bottom: 2px solid #e0e0e0;">Price</th>
-          <th style="padding: 10px 4px; text-align: right; width: 25%; border-bottom: 2px solid #e0e0e0;">Discount</th>
+          <th style="padding: 10px 15px 10px 0; width: 50%;"><div style="border-bottom: 2px solid #e0e0e0; padding-bottom: 8px;">Item</div></th>
+          <th style="padding: 10px 15px; width: 20%; text-align: center;"><div style="border-bottom: 2px solid #e0e0e0; padding-bottom: 8px;">Price</div></th>
+          <th style="padding: 10px 0 10px 15px; width: 30%; text-align: center;"><div style="border-bottom: 2px solid #e0e0e0; padding-bottom: 8px;">Discount</div></th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
     
+    <!-- 2. 將 Total 的上方黑線加寬，使其覆蓋整個 Price 與 Discount 的寬度 -->
     <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
-      <div style="text-align: right; min-width: 200px; padding-top: 15px; border-top: 2px solid #2c3e50;">
+      <!-- min-width 控制這條線的長度，大約等於 Price + Discount 的總寬度 -->
+      <div style="text-align: right; width: 50%; padding-top: 15px; border-top: 2px solid #2c3e50; padding-right: 4px;">
         <div style="font-weight: bold; font-size: 20px; color: #2c3e50; display: flex; justify-content: space-between; align-items: baseline;">
           <span>Total</span>
           <span id="reportTotal">$0</span>
         </div>
-        <!-- 稍微加大的 Saved 提示 -->
-        <div style="color: #95a5a6; font-size: 14px; margin-top: 4px;">
+        <!-- 3. Saved 字體縮小為 12px -->
+        <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">
           (Saved <span id="reportSaved">$0</span>)
         </div>
       </div>
@@ -371,7 +373,6 @@
       }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="9">Failed to load</td></tr>`; });
     }
 
-    // 刪除歷史紀錄的函數
     function deleteOrder(sheetRowIndex) {
         if(!confirm('確定要刪除這筆紀錄嗎？(Are you sure?)')) return;
         
@@ -381,7 +382,7 @@
             body: JSON.stringify({ action: 'deleteOrder', rowIndex: sheetRowIndex })
         }).then(res => res.json()).then(res => {
             if (res.success) {
-                fetchOrders(); // 刪除成功後重新載入列表
+                fetchOrders();
                 showLoading(false);
             } else {
                 showLoading(false);
@@ -423,7 +424,6 @@
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         const displayDiscount = formatDiscountForDisplay(item.Discount);
         
-        // 加上千分位
         const priceStr = formatNumber(item.Price);
         const totalStr = formatNumber(item.Total);
 
@@ -497,18 +497,17 @@
 
         const tr = document.createElement('tr');
         
-        // 加上千分位
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 使用 flexbox 將折數和折後價裝在同一格，間距調近至 gap: 8px;
+        // 使用 flexbox 將折數和折後價對齊
         tr.innerHTML = `
-          <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${priceStr}</td>
-          <td style="padding: 12px 4px; text-align: right;">
-            <div style="display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
-                <div>${discountHtml}</div>
-                <div style="font-weight: 600; color: #2c3e50; min-width: 60px;">$${itemTotalStr}</div>
+          <td style="padding: 12px 15px 12px 0; color: #333; font-weight: 600;">${item.Item}</td>
+          <td style="padding: 12px 15px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
+          <td style="padding: 12px 0 12px 15px;">
+            <div style="display: flex; justify-content: center; gap: 15px; align-items: center;">
+                <div style="width: 40px; text-align: right;">${discountHtml}</div>
+                <div style="font-weight: 600; color: #2c3e50; width: 80px; text-align: right;">$${itemTotalStr}</div>
             </div>
           </td>
         `;
