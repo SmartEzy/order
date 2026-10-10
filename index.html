@@ -33,7 +33,6 @@
     }
     input:focus, select:focus { border-color: #5f6368; outline: none; }
     
-    /* 拖曳區 */
     .drop-zone {
       width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -49,22 +48,21 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
-    /* 按鈕樣式 */
-    .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; }
+    /* 統一按鈕樣式：加入 min-width 讓三個按鈕等大 */
+    .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
     .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; }
     .btn-icon:hover { fill: #d93025; }
 
-    .btn-save { background-color: #202124; }
-    .btn-save:hover { background-color: #000; }
+    /* 移除 btn-save 的預設覆蓋，只保留動作狀態的顏色 */
     .btn-save.saving { background-color: #9aa0a6; cursor: not-allowed; }
     .btn-save.saved { background-color: #1e8e3e; }
 
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格 */
+    /* 歷史紀錄表格樣式 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -141,32 +139,37 @@
       </div>
     </div>
     
+    <!-- 啟用完美的 5 欄結構 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 重新設定寬度：Item 不設限讓它自動撐大，右邊三個欄位鎖死寬度 -->
           <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 15px 10px 4px; text-align: right; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <th colspan="2" style="padding: 10px 4px; text-align: right; width: 130px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <th style="padding: 10px 4px; text-align: center; width: 90px; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <!-- 空白分隔欄位，把 Discount 推開 -->
+          <th style="padding: 10px 0; width: 50px; border-bottom: 1px solid #e0e0e0;"></th>
+          <!-- Discount 標題跨兩欄並完美置中 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 130px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
       
       <tfoot>
-        <tr><td colspan="4" style="height: 15px;"></td></tr>
+        <tr><td colspan="5" style="height: 15px;"></td></tr>
         <tr>
-          <!-- 留空對應 Item 欄位 -->
-          <td></td> 
+          <td></td> <!-- 留空對應 Item -->
           
-          <!-- 對應 Price 欄位：置中偏右對齊 Total 標題並畫上黑線 -->
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 15px 15px 4px; text-align: right; vertical-align: top;">
-            <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">Total</div>
+          <!-- TOTAL 標題放在 Price 欄位下方 -->
+          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
+            <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <!-- 對應 Discount 兩欄：靠右對齊總金額並畫上黑線 -->
+          <!-- 空白分隔欄位延續上方的黑線 -->
+          <td style="border-top: 2px solid #2c3e50;"></td>
+          
+          <!-- 總金額放在 Discount 的兩欄下方 -->
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
-            <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">(Saved <span id="reportSaved">$0</span>)</div>
+            <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
           </td>
         </tr>
       </tfoot>
@@ -190,13 +193,11 @@
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
 
-    // 千分位格式化函數
     function formatNumber(num) {
         if (num === null || num === undefined) return '0';
         return Number(num).toLocaleString('en-US');
     }
 
-    // 垃圾桶 SVG
     const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
     window.onload = function() {
@@ -504,12 +505,13 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 使用獨立的儲存格，讓折數與金額右側對齊，藉由鎖定極小的寬度(40px與90px)，強迫它們互相靠攏！
+        // 使用 5 欄結構，透過獨立欄位嚴格控制距離
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 15px 12px 4px; text-align: right; color: #7f8c8d; width: 80px;">$${priceStr}</td>
-          <td style="padding: 12px 6px 12px 4px; text-align: right; width: 40px;">${discountHtml}</td>
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 90px;">$${itemTotalStr}</td>
+          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${priceStr}</td>
+          <td></td> <!-- 空白分隔 -->
+          <td style="padding: 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+          <td style="padding: 12px 4px; text-align: right; font-weight: 600; color: #2c3e50; width: 85px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
