@@ -14,18 +14,19 @@
     h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
     .panel { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-    /* --- 輸入區與拖曳區樣式 --- */
+    /* --- 輸入區與拖曳區樣式 (圖片框移到右側) --- */
     .item-row {
       display: grid;
-      grid-template-columns: 60px 115px 90px 1fr 75px 85px 60px 35px;
+      /* 調整順序：日期, 名字, 品名, 價格, 折扣, 數量, 刪除, 圖片框 */
+      grid-template-columns: 115px 90px 1fr 75px 85px 60px 35px 60px;
       gap: 8px; margin-bottom: 10px; align-items: center;
     }
     @media (max-width: 768px) {
       .item-row {
-        grid-template-columns: 60px 1fr 1fr;
+        grid-template-columns: 1fr 1fr 60px;
         background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
       }
-      .drop-zone { grid-row: span 2; } 
+      .drop-zone { grid-row: span 2; grid-column: 3; } 
     }
     
     input, select {
@@ -135,20 +136,25 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px;">Item</th> <!-- 修改為 ITEM -->
+          <th style="padding: 10px 4px;">Item</th>
           <th style="padding: 10px 4px; text-align: right; width: 90px;">Price</th>
-          <th style="padding: 10px 4px; text-align: right; width: 80px;">Discount</th>
-          <th style="padding: 10px 4px; text-align: right; width: 100px;">Total</th> <!-- 修改為 TOTAL -->
+          <th style="padding: 10px 4px; text-align: right; width: 120px;">Discount</th>
+          <th style="padding: 10px 4px; text-align: right; width: 100px;">Total</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
     
     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-      <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
-        <!-- 改為淡灰色 -->
-        <tr style="color: #95a5a6;"><td style="padding: 5px 0;">Total Saved:</td><td style="padding: 5px 0;" id="reportSaved">0</td></tr>
-        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;"><td style="padding: 12px 0;">Grand Total:</td><td style="padding: 12px 0;" id="reportTotal">0</td></tr>
+      <table style="width: 280px; font-size: 14px; text-align: right; border-collapse: collapse;">
+        <tr style="color: #95a5a6;">
+            <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;">Total Saved:</td>
+            <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;" id="reportSaved">0</td>
+        </tr>
+        <tr style="font-weight: bold; font-size: 20px; color: #2c3e50;">
+            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;">Grand Total:</td>
+            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;" id="reportTotal">0</td>
+        </tr>
       </table>
     </div>
     
@@ -198,11 +204,6 @@
       row.dataset.imageUrl = "";
       
       row.innerHTML = `
-        <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
-          <span class="drop-text">+ 圖片<br>(可拖曳)</span>
-          <div class="drop-loading">上傳中</div>
-          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
-        </div>
         <input type="date" class="item-date" value="${lastDate}" onclick="this.select()">
         <input type="text" class="item-name" placeholder="名字" value="${lastName}" onclick="this.select()">
         <input type="text" class="item-item" placeholder="品名" onclick="this.select()">
@@ -213,6 +214,11 @@
         </select>
         <input type="number" class="item-qty" placeholder="數量" value="1" inputmode="numeric" onclick="this.select()">
         <button class="btn btn-danger" onclick="removeRow(this)" style="padding: 10px 0;">×</button>
+        <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
+          <span class="drop-text">+ 圖片<br>(可拖曳)</span>
+          <div class="drop-loading">上傳中</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+        </div>
       `;
       container.appendChild(row);
     }
@@ -326,6 +332,16 @@
       }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`; });
     }
 
+    // 在這個函數裡增加尋找 URL 的邏輯，避免因 Sheets 欄位順序亂掉抓不到
+    function findImageUrl(item) {
+        for (const key in item) {
+            if (typeof item[key] === 'string' && item[key].startsWith('http')) {
+                return item[key];
+            }
+        }
+        return null;
+    }
+
     function renderHistoryTable() {
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
@@ -334,8 +350,11 @@
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
-        const imgHtml = item["Image URL"] ? `<a href="${item["Image URL"]}" target="_blank">圖片</a>` : '-';
-        // 修正日期顯示：如果含有 'T'，則切斷只取前面
+        
+        // 使用自訂的尋找 URL 函數
+        const imageUrl = findImageUrl(item);
+        const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank">圖片</a>` : '-';
+        
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
@@ -362,26 +381,36 @@
       let imagesSet = new Set(); 
 
       const firstIdx = selectedChecks[0].value;
-      // 修正表頭日期顯示：如果含有 'T'，則切斷只取前面
       const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
       document.getElementById('reportDate').innerText = `Date: ${reportDateRaw}`;
       document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
 
       selectedChecks.forEach(check => {
         const item = allOrdersData[check.value];
-        grandTotal += parseFloat(item.Total) || 0;
+        const itemTotal = parseFloat(item.Total) || 0;
+        grandTotal += itemTotal;
         grandSaved += parseFloat(item.Saved) || 0;
         
-        if (item["Image URL"]) imagesSet.add(item["Image URL"]);
+        const imageUrl = findImageUrl(item);
+        if (imageUrl) imagesSet.add(imageUrl);
 
-        const displayDiscount = item.Discount === '無' ? '-' : item.Discount;
+        // 格式化 DISCOUNT 欄位：折數 ($折後價)
+        // 例如：0.75 ($44175)
+        let discountDisplay = '-';
+        if (item.Discount !== '無' && item.Discount) {
+            // 如果數量大於 1，itemTotal 會是總金額，這裡抓取折後單價比較合理
+            // 但因為我們只有 Total，如果數量是 1，Total 就是折後價。
+            // 這裡直接顯示折數與總價，確保資訊完整
+            discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span><br><span style="font-size: 11px; color: #7f8c8d;">($${itemTotal})</span>`;
+        }
+
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid #ecf0f1';
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <td style="padding: 12px 4px; text-align: right; color: #e74c3c;">${displayDiscount}</td>
-          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${item.Total}</td>
+          <td style="padding: 12px 4px; text-align: right; line-height: 1.2;">${discountDisplay}</td>
+          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${itemTotal}</td>
         `;
         reportTbody.appendChild(tr);
       });
@@ -401,7 +430,6 @@
         reportImages.appendChild(img);
       });
 
-      // 增加延遲時間以確保圖片完全載入後再進行截圖
       setTimeout(() => {
         showLoading(true);
         const renderArea = document.getElementById('renderArea');
