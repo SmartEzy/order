@@ -141,11 +141,12 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <!-- 將 ITEM 的寬度設為 100%，它會佔用所有剩餘空間 -->
+          <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
           <!-- PRICE 標題：置中，緊湊寬度 80px -->
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 125px -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 125px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- DISCOUNT 標題：跨兩欄置中，縮小涵蓋總寬 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 110px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -162,8 +163,13 @@
           
           <!-- 總金額對齊上方 Discount 區塊，黑線連貫 -->
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
-            <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
-            <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
+            <!-- 使用 flex 靠右，並縮小與折數的間距 -->
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 4px;">
+              <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 4px; margin-top: 4px;">
+              <div style="color: #95a5a6; font-size: 12px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
+            </div>
           </td>
         </tr>
       </tfoot>
@@ -506,11 +512,13 @@
           <!-- Price 區塊：置中，維持狹窄寬度 -->
           <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
           
-          <!-- 折數：右側加一點點 padding 讓它不會太貼金額 -->
-          <td style="padding: 12px 8px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
-          
-          <!-- 金額：緊貼折數 -->
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 80px;">$${itemTotalStr}</td>
+          <!-- Discount 區塊：利用 flexbox 讓兩欄內容並排且間距縮小為 4px -->
+          <td colspan="2" style="padding: 12px 4px;">
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 4px;">
+              <div style="text-align: right;">${discountHtml}</div>
+              <div style="font-weight: 600; color: #2c3e50; text-align: right;">$${itemTotalStr}</div>
+            </div>
+          </td>
         `;
         reportTbody.appendChild(tr);
       });
