@@ -13,10 +13,9 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入區樣式 (增加 Price 欄位寬度) --- */
+    /* --- 輸入區樣式 --- */
     .item-row {
       display: grid;
-      /* 調整：將 Price 從 75px 加大為 95px */
       grid-template-columns: 115px 90px 1fr 95px 85px 60px 35px 60px;
       gap: 8px; margin-bottom: 12px; align-items: center;
     }
@@ -63,7 +62,7 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格 */
+    /* 歷史紀錄表格樣式 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -140,30 +139,36 @@
       </div>
     </div>
     
-    <!-- 恢復 border-collapse: collapse; 取消分割底線 -->
+    <!-- 1. 表格不再用 margin 或 padding 假裝對齊，直接用 table 控制 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
-        <tr style="border-bottom: 1px solid #e0e0e0; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; width: 50%;">Item</th>
-          <th style="padding: 10px 4px; text-align: right; width: 20%;">Price</th>
-          <th style="padding: 10px 4px 10px 0; text-align: right; width: 30%;">Discount</th>
+        <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
+          <th style="padding: 10px 4px; width: 50%; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <th style="padding: 10px 4px; text-align: center; width: 25%; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <th style="padding: 10px 4px; text-align: center; width: 25%; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
+      
+      <!-- 2. 將 Total 區塊直接加在表格的 tfoot，利用 colspan="2" 完美對齊 Price + Discount 欄位 -->
+      <tfoot>
+        <!-- 留一個小空白列隔開資料與總計 -->
+        <tr><td colspan="3" style="height: 15px;"></td></tr>
+        <tr>
+          <td></td> <!-- 留空 ITEM 欄位 -->
+          <!-- Total 區域，嚴格涵蓋後面兩欄 -->
+          <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 5px 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: bold; font-size: 18px; color: #2c3e50;">Total</span>
+              <div style="text-align: right;">
+                <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
+                <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">(Saved <span id="reportSaved">$0</span>)</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
     </table>
-    
-    <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
-      <!-- Total 線段對齊：寬度設為 50% 剛好對齊 Price (20%) + Discount (30%)，不凸出 -->
-      <div style="text-align: right; width: 50%; padding-top: 15px; border-top: 2px solid #2c3e50;">
-        <div style="font-weight: bold; font-size: 20px; color: #2c3e50; display: flex; justify-content: space-between; align-items: baseline;">
-          <span>Total</span>
-          <span id="reportTotal">$0</span>
-        </div>
-        <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">
-          (Saved <span id="reportSaved">$0</span>)
-        </div>
-      </div>
-    </div>
     
     <div id="reportImages" style="margin-top: 40px; text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;"></div>
   </div>
@@ -177,16 +182,19 @@
   </div>
 
   <script>
+    // 🔴 替換成您的 GAS Web App 網址 🔴
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwD3D6dtItQ3uawXAHWr6HFXFKaZPjheN8O2-b3H9VugD30khFiNJQ3GqawONZ5tKD1/exec";
 
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
 
+    // 千分位格式化函數
     function formatNumber(num) {
         if (num === null || num === undefined) return '0';
         return Number(num).toLocaleString('en-US');
     }
 
+    // 垃圾桶 SVG
     const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
     window.onload = function() {
@@ -368,7 +376,7 @@
     }
 
     function deleteOrder(sheetRowIndex) {
-        if(!confirm('確定要刪除這筆紀錄嗎？(Are you sure?)')) return;
+        if(!confirm('確定要刪除這筆紀錄與附帶的圖片嗎？(Are you sure?)')) return;
         
         showLoading(true, 'Deleting...');
         fetch(GAS_WEB_APP_URL, {
@@ -497,10 +505,12 @@
 
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${priceStr}</td>
-          <td style="padding: 12px 0 12px 4px;">
-            <div style="display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
-                <div>${discountHtml}</div>
+          <!-- Price 置中 -->
+          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
+          <!-- Discount 使用 flexbox 讓折數和金額緊密置中對齊 -->
+          <td style="padding: 12px 4px; text-align: center;">
+            <div style="display: flex; justify-content: center; gap: 8px; align-items: center;">
+                <div style="width: 40px; text-align: right;">${discountHtml}</div>
                 <div style="font-weight: 600; color: #2c3e50; min-width: 60px; text-align: right;">$${itemTotalStr}</div>
             </div>
           </td>
