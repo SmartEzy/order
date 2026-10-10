@@ -14,10 +14,9 @@
     h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
     .panel { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-    /* --- 輸入區與拖曳區樣式 (圖片框移到右側) --- */
+    /* --- 輸入區與拖曳區樣式 --- */
     .item-row {
       display: grid;
-      /* 調整順序：日期, 名字, 品名, 價格, 折扣, 數量, 刪除, 圖片框 */
       grid-template-columns: 115px 90px 1fr 75px 85px 60px 35px 60px;
       gap: 8px; margin-bottom: 10px; align-items: center;
     }
@@ -130,7 +129,8 @@
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
       <div style="text-align: right; font-size: 14px; color: #555; line-height: 1.6;">
         <div style="font-weight: bold; color: #333;" id="reportName">Name: </div>
-        <div id="reportDate">Date: </div>
+        <!-- 移除 Date: 文字，只留數值 -->
+        <div id="reportDate"></div>
       </div>
     </div>
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
@@ -152,7 +152,8 @@
             <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;" id="reportSaved">0</td>
         </tr>
         <tr style="font-weight: bold; font-size: 20px; color: #2c3e50;">
-            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;">Grand Total:</td>
+            <!-- 修改 Grand Total 為 Total -->
+            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;">Total:</td>
             <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;" id="reportTotal">0</td>
         </tr>
       </table>
@@ -332,7 +333,6 @@
       }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`; });
     }
 
-    // 在這個函數裡增加尋找 URL 的邏輯，避免因 Sheets 欄位順序亂掉抓不到
     function findImageUrl(item) {
         for (const key in item) {
             if (typeof item[key] === 'string' && item[key].startsWith('http')) {
@@ -351,7 +351,6 @@
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         
-        // 使用自訂的尋找 URL 函數
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank">圖片</a>` : '-';
         
@@ -382,7 +381,9 @@
 
       const firstIdx = selectedChecks[0].value;
       const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
-      document.getElementById('reportDate').innerText = `Date: ${reportDateRaw}`;
+      
+      // 直接填入日期數值，不加 "Date:"
+      document.getElementById('reportDate').innerText = reportDateRaw;
       document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
 
       selectedChecks.forEach(check => {
@@ -394,13 +395,9 @@
         const imageUrl = findImageUrl(item);
         if (imageUrl) imagesSet.add(imageUrl);
 
-        // 格式化 DISCOUNT 欄位：折數 ($折後價)
-        // 例如：0.75 ($44175)
         let discountDisplay = '-';
         if (item.Discount !== '無' && item.Discount) {
-            // 如果數量大於 1，itemTotal 會是總金額，這裡抓取折後單價比較合理
-            // 但因為我們只有 Total，如果數量是 1，Total 就是折後價。
-            // 這裡直接顯示折數與總價，確保資訊完整
+            // 包含折數與折後價
             discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span><br><span style="font-size: 11px; color: #7f8c8d;">($${itemTotal})</span>`;
         }
 
@@ -418,19 +415,52 @@
       document.getElementById('reportSaved').innerText = `$${grandSaved}`;
       document.getElementById('reportTotal').innerText = `$${grandTotal}`;
 
-      // 載入圖片到報表下方
+      // 載入圖片到報表下方，並確保圖片載入完成
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
-      imagesSet.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.maxHeight = '200px'; img.style.maxWidth = '100%';
-        img.style.borderRadius = '6px'; img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        img.crossOrigin = "anonymous";
-        reportImages.appendChild(img);
-      });
+      
+      let loadedCount = 0;
+      const totalImages = imagesSet.size;
 
-      setTimeout(() => {
+      if (totalImages === 0) {
+          executeCanvas();
+      } else {
+          showLoading(true);
+          imagesSet.forEach(url => {
+            const img = document.createElement('img');
+            img.crossOrigin = "anonymous";
+            
+            // 處理跨域圖片的一個小技巧：加上時間戳避免快取問題
+            img.src = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+            
+            img.style.maxHeight = '200px'; 
+            img.style.maxWidth = '100%';
+            img.style.borderRadius = '6px'; 
+            img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            
+            // 監聽圖片載入完成
+            img.onload = function() {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    // 多給 500ms 讓畫面排版穩定
+                    setTimeout(executeCanvas, 500);
+                }
+            };
+            
+            // 萬一圖片載入失敗，也要繼續走
+            img.onerror = function() {
+                loadedCount++;
+                if (loadedCount === totalImages) {
+                    setTimeout(executeCanvas, 500);
+                }
+            };
+            
+            reportImages.appendChild(img);
+          });
+      }
+    }
+
+    function executeCanvas() {
         showLoading(true);
         const renderArea = document.getElementById('renderArea');
         html2canvas(renderArea, { scale: 2, useCORS: true }).then(canvas => {
@@ -438,8 +468,10 @@
           generatedCanvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
           document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
           document.getElementById('previewModal').style.display = 'flex';
-        }).catch(err => { showLoading(false); alert('產生預覽失敗'); });
-      }, 1500); 
+        }).catch(err => { 
+          showLoading(false); 
+          alert('產生預覽失敗'); 
+        });
     }
 
     function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
