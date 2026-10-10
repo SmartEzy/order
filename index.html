@@ -426,18 +426,11 @@
         const priceStr = formatNumber(item.Price);
         const totalStr = formatNumber(item.Total);
 
-        // 原生四欄結構，每個數值皆被鎖在專屬寬度的格子內，達成完美置中與數值靠右
         tr.innerHTML = `
-          <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          
-          <!-- Price 區塊：置中，維持狹窄寬度 -->
-          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
-          
-          <!-- 折數：縮小寬度，縮小 padding-right 讓它更貼近金額 -->
-          <td style="padding: 12px 4px 12px 4px; text-align: right; width: 30px;">${discountHtml}</td>
-          
-          <!-- 金額：縮小寬度限制 -->
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
+          <td><input type="checkbox" class="row-check" value="${index}"></td>
+          <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
+          <td>$${priceStr}</td><td>${displayDiscount}</td><td style="font-weight: 500;">$${totalStr}</td><td>${imgHtml}</td>
+          <td style="text-align: center;"><button class="btn-icon" onclick="deleteOrder(${item.sheetRowIndex})" title="Delete">${trashIcon}</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -513,11 +506,11 @@
           <!-- Price 區塊：置中，維持狹窄寬度 -->
           <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
           
-          <!-- 折數：右側加一點點 padding 讓它不會太貼金額 -->
-          <td style="padding: 12px 8px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+          <!-- 折數：縮小寬度，縮小 padding-right 讓它更貼近金額 -->
+          <td style="padding: 12px 4px 12px 4px; text-align: right; width: 30px;">${discountHtml}</td>
           
-          <!-- 金額：緊貼折數 -->
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 80px;">$${itemTotalStr}</td>
+          <!-- 金額：縮小寬度限制 -->
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
