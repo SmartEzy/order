@@ -13,10 +13,10 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入區樣式 --- */
+    /* --- 輸入區樣式：加寬 Date 欄位解決遮擋問題 --- */
     .item-row {
       display: grid;
-      grid-template-columns: 115px 90px 1fr 95px 85px 60px 35px 60px;
+      grid-template-columns: 140px 90px 1fr 95px 85px 60px 35px 60px;
       gap: 8px; margin-bottom: 12px; align-items: center;
     }
     @media (max-width: 768px) {
@@ -33,6 +33,7 @@
     }
     input:focus, select:focus { border-color: #5f6368; outline: none; }
     
+    /* 拖曳區 */
     .drop-zone {
       width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -48,6 +49,7 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
+    /* 按鈕樣式 */
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
@@ -60,7 +62,7 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格樣式 */
+    /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -137,33 +139,30 @@
       </div>
     </div>
     
-    <!-- 完美對齊表格結構 -->
+    <!-- 4欄完美對齊結構 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <!-- PRICE 欄位：鎖定極小寬度 (65px)，讓它只夠放數字，達成置中的視覺感 -->
-          <th style="padding: 10px 4px; text-align: right; width: 65px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- 空白分隔：縮小間距 -->
-          <th style="padding: 10px 0; width: 25px; border-bottom: 1px solid #e0e0e0;"></th>
-          <!-- DISCOUNT 標題：鎖定極小寬度 (105px) -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 105px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- PRICE 置中對齊標題 -->
+          <th style="padding: 10px 4px; text-align: center; width: 100px; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <!-- DISCOUNT 置中對齊標題 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 130px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
       
       <tfoot>
-        <tr><td colspan="5" style="height: 15px;"></td></tr>
+        <tr><td colspan="4" style="height: 15px;"></td></tr>
         <tr>
           <td></td> 
           
-          <!-- TOTAL 標題放在 Price 欄位下方 -->
+          <!-- TOTAL 完美置中於 PRICE 欄位下方 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <td style="border-top: 2px solid #2c3e50;"></td>
-          
+          <!-- 總額完美對齊上方 DISCOUNT 的區塊 -->
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
             <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
@@ -502,15 +501,12 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 資料列：對應表頭的 5 欄結構
+        // 透過增加 padding-right 來使數字在視覺上置中，但確保對齊基準點在右側
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <!-- Price: 靠右對齊，因為寬度很小(65px)，會有置中的效果 -->
-          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d; width: 65px;">$${priceStr}</td>
-          <td></td> <!-- 空白分隔 -->
-          <!-- Discount: 折數與金額各自有極小的寬度，強迫靠緊 -->
-          <td style="padding: 12px 4px; text-align: right; width: 35px;">${discountHtml}</td>
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 70px;">$${itemTotalStr}</td>
+          <td style="padding: 12px 25px 12px 4px; text-align: right; color: #7f8c8d; width: 100px;">$${priceStr}</td>
+          <td style="padding: 12px 8px 12px 0; text-align: right; width: 45px;">${discountHtml}</td>
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 85px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
