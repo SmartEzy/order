@@ -17,7 +17,6 @@
     /* --- 輸入區與拖曳區樣式 --- */
     .item-row {
       display: grid;
-      /* 新增最左側的 60px 作為圖片拖曳區 */
       grid-template-columns: 60px 115px 90px 1fr 75px 85px 60px 35px;
       gap: 8px; margin-bottom: 10px; align-items: center;
     }
@@ -26,7 +25,7 @@
         grid-template-columns: 60px 1fr 1fr;
         background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
       }
-      .drop-zone { grid-row: span 2; } /* 手機版讓圖片框跨兩列 */
+      .drop-zone { grid-row: span 2; } 
     }
     
     input, select {
@@ -34,7 +33,6 @@
     }
     input:focus, select:focus { border-color: #1a73e8; outline: none; }
     
-    /* 圖片拖曳區塊 */
     .drop-zone {
       width: 60px; height: 60px; border: 2px dashed #ccc; border-radius: 6px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -43,7 +41,7 @@
     }
     .drop-zone.dragover { border-color: #1a73e8; background-color: #e8f0fe; }
     .drop-text { font-size: 12px; color: #888; text-align: center; pointer-events: none; }
-    .drop-zone.has-image .drop-text { display: none; } /* 有圖片時隱藏文字 */
+    .drop-zone.has-image .drop-text { display: none; } 
     .drop-loading {
       position: absolute; top:0; left:0; width:100%; height:100%;
       background: rgba(255,255,255,0.8); display: none;
@@ -137,20 +135,24 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px;">Item Description</th>
+          <th style="padding: 10px 4px;">Item</th> <!-- 修改為 ITEM -->
           <th style="padding: 10px 4px; text-align: right; width: 90px;">Price</th>
           <th style="padding: 10px 4px; text-align: right; width: 80px;">Discount</th>
-          <th style="padding: 10px 4px; text-align: right; width: 100px;">Amount</th>
+          <th style="padding: 10px 4px; text-align: right; width: 100px;">Total</th> <!-- 修改為 TOTAL -->
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
+    
     <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
       <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
-        <tr style="color: #27ae60;"><td style="padding: 5px 0;">Total Saved:</td><td style="padding: 5px 0;" id="reportSaved">0</td></tr>
-        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;"><td style="padding: 12px 0;">Total:</td><td style="padding: 12px 0;" id="reportTotal">0</td></tr>
+        <!-- 改為淡灰色 -->
+        <tr style="color: #95a5a6;"><td style="padding: 5px 0;">Total Saved:</td><td style="padding: 5px 0;" id="reportSaved">0</td></tr>
+        <tr style="font-weight: bold; font-size: 20px; border-top: 1px solid #bdc3c7; color: #2c3e50;"><td style="padding: 12px 0;">Grand Total:</td><td style="padding: 12px 0;" id="reportTotal">0</td></tr>
       </table>
     </div>
+    
+    <!-- 產品圖片將會顯示在這裡 -->
     <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 15px;"></div>
   </div>
 
@@ -192,7 +194,6 @@
 
       const row = document.createElement('div');
       row.className = 'item-row';
-      // 將圖片 ID 與 URL 綁在這一列的 dataset 中
       row.dataset.imageId = "";
       row.dataset.imageUrl = "";
       
@@ -222,7 +223,6 @@
       } else { alert('至少需保留一項'); }
     }
 
-    // 處理拖曳事件
     function handleDrop(event, dropZone) {
       event.preventDefault();
       dropZone.classList.remove('dragover');
@@ -231,23 +231,20 @@
       }
     }
 
-    // 處理點擊選擇檔案
     function handleRowImageUpload(input, dropZone) {
       if (input.files && input.files[0]) {
         uploadFileForDropZone(input.files[0], dropZone);
       }
     }
 
-    // 實際執行檔案轉 Base64 與上傳 API
     function uploadFileForDropZone(file, dropZone) {
       const row = dropZone.closest('.item-row');
       const reader = new FileReader();
       const loading = dropZone.querySelector('.drop-loading');
       
-      loading.style.display = 'flex'; // 顯示上傳中
+      loading.style.display = 'flex'; 
       
       reader.onload = function(e) {
-        // 先在前端顯示縮圖 (體驗比較好)
         dropZone.style.backgroundImage = `url(${e.target.result})`;
         dropZone.classList.add('has-image');
 
@@ -257,7 +254,6 @@
         }).then(res => res.json()).then(res => {
           loading.style.display = 'none';
           if (res.success) {
-            // 將成功取得的 Google Drive ID 與網址綁定在這一列
             row.dataset.imageId = res.fileId;
             row.dataset.imageUrl = res.url;
           } else {
@@ -273,7 +269,6 @@
       reader.readAsDataURL(file);
     }
 
-    // 儲存至 Sheets (抓取每一列自己的圖片資料)
     function saveToSheets() {
       const rows = document.querySelectorAll('.item-row');
       const dataList = [];
@@ -287,7 +282,6 @@
         const discount = row.querySelector('.item-discount').value;
         const qty = parseInt(row.querySelector('.item-qty').value) || 1;
         
-        // 取得該列專屬的圖片資料
         const rowImageId = row.dataset.imageId || "";
         const rowImageUrl = row.dataset.imageUrl || "";
 
@@ -305,7 +299,7 @@
           date: date, name: name, itemName: itemName, price: price, discount: discount,
           discountPrice: unitDiscountPrice, savedAmount: (price - unitDiscountPrice) * qty,
           total: unitDiscountPrice * qty, 
-          imageId: rowImageId, imageUrl: rowImageUrl // 各自獨立的圖片
+          imageId: rowImageId, imageUrl: rowImageUrl 
         });
       });
 
@@ -318,7 +312,6 @@
         showLoading(false);
         if (res.success) {
           alert('儲存成功！');
-          // 儲存後清空輸入區，只留一行空白
           document.getElementById('itemsContainer').innerHTML = '';
           addItemRow();
           fetchOrders();
@@ -326,7 +319,7 @@
       });
     }
 
-    // --- 歷史紀錄與產生報表邏輯 (完全相容多張圖片) ---
+    // --- 歷史紀錄與產生報表邏輯 ---
     function fetchOrders() {
       fetch(GAS_WEB_APP_URL + "?action=getOrders").then(res => res.json()).then(res => {
         if (res.success) { allOrdersData = res.data; renderHistoryTable(); }
@@ -342,9 +335,11 @@
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         const imgHtml = item["Image URL"] ? `<a href="${item["Image URL"]}" target="_blank">圖片</a>` : '-';
+        // 修正日期顯示：如果含有 'T'，則切斷只取前面
+        const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
-          <td>${item.Date || ''}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
+          <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
           <td>$${item.Price || 0}</td><td>${item.Discount || '-'}</td><td><b>$${item.Total || 0}</b></td><td>${imgHtml}</td>
         `;
         tbody.appendChild(tr);
@@ -364,10 +359,12 @@
       reportTbody.innerHTML = '';
       
       let grandTotal = 0; let grandSaved = 0;
-      let imagesSet = new Set(); // 使用 Set 過濾可能重複上傳的網址
+      let imagesSet = new Set(); 
 
       const firstIdx = selectedChecks[0].value;
-      document.getElementById('reportDate').innerText = `Date: ${allOrdersData[firstIdx].Date}`;
+      // 修正表頭日期顯示：如果含有 'T'，則切斷只取前面
+      const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
+      document.getElementById('reportDate').innerText = `Date: ${reportDateRaw}`;
       document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
 
       selectedChecks.forEach(check => {
@@ -375,7 +372,6 @@
         grandTotal += parseFloat(item.Total) || 0;
         grandSaved += parseFloat(item.Saved) || 0;
         
-        // 收集圖片
         if (item["Image URL"]) imagesSet.add(item["Image URL"]);
 
         const displayDiscount = item.Discount === '無' ? '-' : item.Discount;
@@ -393,7 +389,7 @@
       document.getElementById('reportSaved').innerText = `$${grandSaved}`;
       document.getElementById('reportTotal').innerText = `$${grandTotal}`;
 
-      // 載入多張截圖
+      // 載入圖片到報表下方
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
       imagesSet.forEach(url => {
@@ -405,6 +401,7 @@
         reportImages.appendChild(img);
       });
 
+      // 增加延遲時間以確保圖片完全載入後再進行截圖
       setTimeout(() => {
         showLoading(true);
         const renderArea = document.getElementById('renderArea');
@@ -414,7 +411,7 @@
           document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
           document.getElementById('previewModal').style.display = 'flex';
         }).catch(err => { showLoading(false); alert('產生預覽失敗'); });
-      }, 1500); // 稍微延長等待圖片完全載入的時間
+      }, 1500); 
     }
 
     function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
