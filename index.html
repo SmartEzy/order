@@ -137,33 +137,33 @@
       </div>
     </div>
     
-    <!-- 回歸最標準的三欄表格控制，使用百分比完美鎖定寬度 -->
+    <!-- 啟用原生四欄結構，達成完美的絕對對齊 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; width: 55%; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 15px 10px 4px; text-align: right; width: 15%; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <th style="padding: 10px 4px; text-align: center; width: 30%; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <!-- PRICE 標題：置中，緊湊寬度 80px -->
+          <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 125px -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 125px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
       
       <tfoot>
-        <tr><td colspan="3" style="height: 15px;"></td></tr>
+        <tr><td colspan="4" style="height: 15px;"></td></tr>
         <tr>
           <td></td> 
           
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 15px 15px 4px; text-align: right; vertical-align: top;">
+          <!-- TOTAL 完美置中於 PRICE 欄位下方 -->
+          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; vertical-align: top;">
-            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 15px;">
-              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; width: 85px; text-align: right;" id="reportTotal">$0</div>
-            </div>
-            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 15px; margin-top: 4px;">
-              <div style="color: #95a5a6; font-size: 12px; width: 85px; text-align: right; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
-            </div>
+          <!-- 總金額對齊上方 Discount 區塊，黑線連貫 -->
+          <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
+            <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
+            <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
           </td>
         </tr>
       </tfoot>
@@ -499,15 +499,18 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
+        // 原生四欄結構，每個數值皆被鎖在專屬寬度的格子內，達成完美置中與數值靠右
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 15px 12px 4px; text-align: right; color: #7f8c8d;">$${priceStr}</td>
-          <td style="padding: 12px 4px;">
-            <div style="display: flex; justify-content: flex-end; gap: 15px; align-items: baseline;">
-                <div style="text-align: right;">${discountHtml}</div>
-                <div style="font-weight: 600; color: #2c3e50; width: 85px; text-align: right;">$${itemTotalStr}</div>
-            </div>
-          </td>
+          
+          <!-- Price 區塊：置中，維持狹窄寬度 -->
+          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
+          
+          <!-- 折數：右側加一點點 padding 讓它不會太貼金額 -->
+          <td style="padding: 12px 8px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+          
+          <!-- 金額：緊貼折數 -->
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 80px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
