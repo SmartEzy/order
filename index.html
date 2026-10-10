@@ -4,20 +4,20 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Entry & Reporting System</title>
+  <title>Order System</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f7f9fa; margin: 0; padding: 20px; color: #333;
+      background-color: #f7f9fa; margin: 0; padding: 30px 20px; color: #333;
       max-width: 950px; margin-left: auto; margin-right: auto;
     }
-    h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
-    .panel { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
+    /* --- 輸入區樣式 (中性色調) --- */
     .item-row {
       display: grid;
       grid-template-columns: 115px 90px 1fr 75px 85px 60px 35px 60px;
-      gap: 8px; margin-bottom: 10px; align-items: center;
+      gap: 8px; margin-bottom: 12px; align-items: center;
     }
     @media (max-width: 768px) {
       .item-row {
@@ -28,40 +28,54 @@
     }
     
     input, select {
-      padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;
+      padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;
+      color: #333; background: #fff;
     }
-    input:focus, select:focus { border-color: #1a73e8; outline: none; }
+    input:focus, select:focus { border-color: #5f6368; outline: none; }
     
+    /* 拖曳區 */
     .drop-zone {
-      width: 60px; height: 60px; border: 2px dashed #ccc; border-radius: 6px;
+      width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
-      background-color: #fafafa; background-size: cover; background-position: center;
+      background-color: #f8f9fa; background-size: cover; background-position: center;
       position: relative; overflow: hidden; transition: 0.2s;
     }
-    .drop-zone.dragover { border-color: #1a73e8; background-color: #e8f0fe; }
-    .drop-text { font-size: 12px; color: #888; text-align: center; pointer-events: none; }
+    .drop-zone.dragover { border-color: #5f6368; background-color: #e8eaed; }
+    .drop-text { font-size: 11px; color: #777; text-align: center; pointer-events: none; }
     .drop-zone.has-image .drop-text { display: none; } 
     .drop-loading {
       position: absolute; top:0; left:0; width:100%; height:100%;
-      background: rgba(255,255,255,0.8); display: none;
-      justify-content: center; align-items: center; font-size: 10px; color: #1a73e8;
+      background: rgba(255,255,255,0.85); display: none;
+      justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
-    .btn { background-color: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-    .btn:hover { background-color: #1557b0; }
-    .btn-danger { background-color: #d93025; }
-    .btn-success { background-color: #34a853; }
-    .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+    /* 按鈕樣式 (中性色) */
+    .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; }
+    .btn:hover { background-color: #3c4043; }
+    
+    /* 刪除該列的按鈕 (低調灰色) */
+    .btn-remove { background: none; border: none; color: #9aa0a6; font-size: 18px; cursor: pointer; padding: 5px; }
+    .btn-remove:hover { color: #5f6368; }
 
-    .history-table-wrapper { overflow-x: auto; margin-top: 15px; }
+    /* SAVE 按鈕狀態變化 */
+    .btn-save { background-color: #202124; }
+    .btn-save:hover { background-color: #000; }
+    .btn-save.saving { background-color: #9aa0a6; cursor: not-allowed; }
+    .btn-save.saved { background-color: #1e8e3e; }
+
+    .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+    .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+
+    /* 歷史紀錄表格樣式 */
+    .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.history-table th, table.history-table td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: left; }
-    table.history-table th { background: #f1f3f4; color: #555; }
+    table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; }
+    table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; }
     
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(255,255,255,0.9); z-index: 999; justify-content: center; align-items: center; flex-direction: column;
-      font-size: 18px; font-weight: bold; color: #1a73e8;
+      font-size: 16px; font-weight: 500; color: #5f6368;
     }
     
     #previewModal {
@@ -73,11 +87,11 @@
       border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); overflow: auto; text-align: center;
     }
     .close-btn, .share-btn { position: absolute; top: 10px; background: none; border: none; cursor: pointer; }
-    .close-btn { right: 15px; font-size: 24px; font-weight: bold; color: #333; }
+    .close-btn { right: 15px; font-size: 24px; color: #555; }
     .share-btn { left: 15px; padding: 4px; }
     .share-btn svg { width: 22px; height: 22px; fill: #5f6368; }
     
-    #canvasResultImg { max-width: 100%; height: auto; border: 1px solid #ddd; cursor: zoom-in; transition: transform 0.3s ease; }
+    #canvasResultImg { max-width: 100%; height: auto; border: 1px solid #eee; cursor: zoom-in; transition: transform 0.3s ease; }
     #canvasResultImg.fullscreen {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: contain;
       background: rgba(0,0,0,0.95); cursor: zoom-out; z-index: 2000; padding: 20px;
@@ -88,22 +102,22 @@
 <body>
   
   <div id="loadingOverlay">
-    <div id="loadingText">處理中，請稍候...</div>
+    <div id="loadingText">Processing...</div>
   </div>
 
+  <!-- 輸入區 -->
   <div class="panel">
-    <h2>1. 新增訂貨紀錄</h2>
     <div id="itemsContainer"></div>
-    <div class="actions">
-      <button class="btn" onclick="addItemRow()">＋ 增加品項</button>
-      <button class="btn btn-success" onclick="saveToSheets()">儲存至試算表</button>
+    <div class="actions-top">
+      <button class="btn" onclick="addItemRow()">ADD</button>
+      <button class="btn btn-save" id="btnSave" onclick="saveToSheets()">SAVE</button>
     </div>
   </div>
 
+  <!-- 列表區 -->
   <div class="panel">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #ddd; padding-bottom: 5px;">
-      <h2 style="margin: 0; color: #333;">2. 訂貨紀錄列表</h2>
-      <button class="btn btn-success" style="padding: 6px 12px; font-size: 13px;" onclick="generateSelectedPreview()">產生選取報表</button>
+    <div class="actions-bottom">
+      <button class="btn" onclick="generateSelectedPreview()">REPORT</button>
     </div>
     <div class="history-table-wrapper">
       <table class="history-table">
@@ -114,13 +128,13 @@
           </tr>
         </thead>
         <tbody id="historyTbody">
-          <tr><td colspan="8" style="text-align:center;">載入中...</td></tr>
+          <tr><td colspan="8" style="text-align:center; color: #999;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- 報表渲染區 -->
+  <!-- 報表渲染區 (不可見) -->
   <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
@@ -132,41 +146,38 @@
     
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
-        <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 將 ITEM 欄位加寬，讓三個數值欄位向右靠攏 -->
-          <th style="padding: 10px 4px; width: 55%;">Item</th>
+        <tr style="border-bottom: 1px solid #e0e0e0; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
+          <th style="padding: 10px 4px; width: 60%;">Item</th>
           <th style="padding: 10px 4px; text-align: right; width: 15%;">Price</th>
-          <th style="padding: 10px 4px; text-align: right; width: 15%;">Discount</th>
-          <th style="padding: 10px 4px; text-align: right; width: 15%;">Total</th>
+          <!-- 刪除 TOTAL 標題，將 DISCOUNT 跨兩欄並靠近數值 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: right; width: 25%;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
     
-    <!-- 簡化總計區塊線條 -->
-    <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
-      <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
+    <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+      <table style="width: 260px; font-size: 14px; text-align: right; border-collapse: collapse;">
         <tr style="color: #95a5a6;">
-            <td style="padding: 12px 0 4px 0;">Total Saved:</td>
-            <td style="padding: 12px 0 4px 0;" id="reportSaved">0</td>
+            <td style="padding: 10px 0 5px 0;">Total Saved:</td>
+            <td style="padding: 10px 0 5px 0;" id="reportSaved">0</td>
         </tr>
-        <!-- 只留上方一條稍粗的線，移除下方雙線，更加簡潔 -->
         <tr style="font-weight: bold; font-size: 20px; color: #2c3e50;">
-            <td style="padding: 8px 0; border-top: 2px solid #2c3e50;">Total:</td>
-            <td style="padding: 8px 0; border-top: 2px solid #2c3e50;" id="reportTotal">0</td>
+            <td style="padding: 10px 0; border-top: 2px solid #2c3e50;">Total:</td>
+            <td style="padding: 10px 0; border-top: 2px solid #2c3e50;" id="reportTotal">0</td>
         </tr>
       </table>
     </div>
     
-    <div id="reportImages" style="margin-top: 35px; text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;"></div>
+    <!-- 加入 object-fit 避免壓扁 -->
+    <div id="reportImages" style="margin-top: 40px; text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;"></div>
   </div>
 
   <div id="previewModal">
     <div class="modal-content-wrapper">
       <button class="share-btn" onclick="shareOrDownloadImage()"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></button>
       <button class="close-btn" onclick="closePreview()">×</button>
-      <h3 style="margin-top: 5px; margin-bottom: 15px; font-size: 16px; color: #555;">Image Preview</h3>
-      <div style="display: inline-block;"><img id="canvasResultImg" alt="Preview"></div>
+      <div style="display: inline-block; margin-top: 10px;"><img id="canvasResultImg" alt="Preview"></div>
     </div>
   </div>
 
@@ -182,7 +193,7 @@
       fetchOrders();
     };
 
-    function showLoading(show, text = '處理中，請稍候...') { 
+    function showLoading(show, text = 'Processing...') { 
         const overlay = document.getElementById('loadingOverlay');
         document.getElementById('loadingText').innerText = text;
         overlay.style.display = show ? 'flex' : 'none'; 
@@ -204,12 +215,11 @@
       row.dataset.imageId = "";
       row.dataset.imageUrl = "";
       
-      // 折扣預設 85%
       row.innerHTML = `
         <input type="date" class="item-date" value="${lastDate}" onclick="this.select()">
-        <input type="text" class="item-name" placeholder="名字" value="${lastName}" onclick="this.select()">
-        <input type="text" class="item-item" placeholder="品名" onclick="this.select()">
-        <input type="number" class="item-price" placeholder="價格" onclick="this.select()">
+        <input type="text" class="item-name" placeholder="Name" value="${lastName}" onclick="this.select()">
+        <input type="text" class="item-item" placeholder="Item" onclick="this.select()">
+        <input type="number" class="item-price" placeholder="Price" onclick="this.select()">
         <select class="item-discount">
           <option value="75%">75%</option>
           <option value="85%" selected>85%</option>
@@ -217,11 +227,11 @@
           <option value="無">無</option>
           <option value="自訂">自訂</option>
         </select>
-        <input type="number" class="item-qty" placeholder="數量" value="1" inputmode="numeric" onclick="this.select()">
-        <button class="btn btn-danger" onclick="removeRow(this)" style="padding: 10px 0;">×</button>
+        <input type="number" class="item-qty" placeholder="Qty" value="1" inputmode="numeric" onclick="this.select()">
+        <button class="btn-remove" onclick="removeRow(this)">×</button>
         <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
-          <span class="drop-text">+ 圖片<br>(可拖曳)</span>
-          <div class="drop-loading">上傳中</div>
+          <span class="drop-text">+ Img</span>
+          <div class="drop-loading">Up...</div>
           <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
         </div>
       `;
@@ -231,7 +241,7 @@
     function removeRow(btn) {
       if (document.getElementsByClassName('item-row').length > 1) {
         btn.parentElement.remove();
-      } else { alert('至少需保留一項'); }
+      } else { alert('至少需保留一項 (Keep at least one item)'); }
     }
 
     function handleDrop(event, dropZone) {
@@ -268,19 +278,22 @@
             row.dataset.imageId = res.fileId;
             row.dataset.imageUrl = res.url;
           } else {
-            alert('圖片上傳失敗: ' + res.error);
+            alert('Upload failed: ' + res.error);
             dropZone.style.backgroundImage = 'none';
             dropZone.classList.remove('has-image');
           }
         }).catch(err => {
           loading.style.display = 'none';
-          alert('連線錯誤: ' + err.message);
+          alert('Network error: ' + err.message);
         });
       };
       reader.readAsDataURL(file);
     }
 
     function saveToSheets() {
+      const btnSave = document.getElementById('btnSave');
+      if (btnSave.classList.contains('saving')) return;
+
       const rows = document.querySelectorAll('.item-row');
       const dataList = [];
       let isValid = true;
@@ -314,33 +327,50 @@
         });
       });
 
-      if (!isValid) { alert('請填寫完整的品名與價格'); return; }
+      if (!isValid) { alert('請填寫完整的品名與價格 (Missing Item or Price)'); return; }
 
-      showLoading(true, '儲存資料中...');
+      // SAVE 按鈕狀態變化
+      btnSave.classList.add('saving');
+      btnSave.innerText = 'Saving...';
+
       fetch(GAS_WEB_APP_URL, {
         method: 'POST', body: JSON.stringify({ action: 'saveOrders', orders: dataList })
       }).then(res => res.json()).then(res => {
-        showLoading(false);
         if (res.success) {
-          alert('儲存成功！');
+          btnSave.classList.remove('saving');
+          btnSave.classList.add('saved');
+          btnSave.innerText = 'Saved! ✔';
+          
           document.getElementById('itemsContainer').innerHTML = '';
           addItemRow();
           fetchOrders();
-        } else { alert('儲存失敗：' + res.error); }
+
+          // 2秒後恢復原狀
+          setTimeout(() => {
+            btnSave.classList.remove('saved');
+            btnSave.innerText = 'SAVE';
+          }, 2000);
+        } else { 
+          alert('Save Failed: ' + res.error); 
+          btnSave.classList.remove('saving');
+          btnSave.innerText = 'SAVE';
+        }
+      }).catch(err => {
+          alert('Save Error: ' + err.message);
+          btnSave.classList.remove('saving');
+          btnSave.innerText = 'SAVE';
       });
     }
 
     function fetchOrders() {
       fetch(GAS_WEB_APP_URL + "?action=getOrders").then(res => res.json()).then(res => {
         if (res.success) { allOrdersData = res.data; renderHistoryTable(); }
-      }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">讀取失敗</td></tr>`; });
+      }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="8">Failed to load</td></tr>`; });
     }
 
     function findImageUrl(item) {
         for (const key in item) {
-            if (typeof item[key] === 'string' && item[key].startsWith('http')) {
-                return item[key];
-            }
+            if (typeof item[key] === 'string' && item[key].startsWith('http')) return item[key];
         }
         return null;
     }
@@ -349,17 +379,17 @@
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
       if(allOrdersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">無歷史紀錄</td></tr>`; return;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: #999;">No records found</td></tr>`; return;
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         const imageUrl = findImageUrl(item);
-        const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank">圖片</a>` : '-';
+        const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Img</a>` : '-';
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
-          <td>$${item.Price || 0}</td><td>${item.Discount || '-'}</td><td><b>$${item.Total || 0}</b></td><td>${imgHtml}</td>
+          <td>$${item.Price || 0}</td><td>${item.Discount || '-'}</td><td style="font-weight: 500;">$${item.Total || 0}</td><td>${imgHtml}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -372,7 +402,7 @@
 
     function generateSelectedPreview() {
       const selectedChecks = document.querySelectorAll('.row-check:checked');
-      if(selectedChecks.length === 0) { alert('請先勾選要產生報表的項目'); return; }
+      if(selectedChecks.length === 0) { alert('請先勾選項目 (Select items first)'); return; }
 
       const reportTbody = document.getElementById('reportTbody');
       reportTbody.innerHTML = '';
@@ -395,18 +425,19 @@
         const imageUrl = findImageUrl(item);
         if (imageUrl) urlsToFetch.add(imageUrl);
 
-        // 移除下方的 ($xxxx)，只顯示折數
+        // 折扣改用百分比顯示，並且靠近總額
         let discountDisplay = '-';
         if (item.Discount !== '無' && item.Discount) {
+            // 如果輸入是 "85%" 字串，直接顯示；如果是數值，就顯示原本的
             discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span>`;
         }
 
         const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #ecf0f1';
+        tr.style.borderBottom = '1px solid #f0f0f0';
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <td style="padding: 12px 4px; text-align: right; line-height: 1.2;">${discountDisplay}</td>
+          <td style="padding: 12px 2px; text-align: right; width: 60px;">${discountDisplay}</td>
           <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${itemTotal}</td>
         `;
         reportTbody.appendChild(tr);
@@ -419,7 +450,7 @@
       reportImages.innerHTML = '';
       
       if (urlsToFetch.size > 0) {
-          showLoading(true, '正在轉換雲端圖片...');
+          showLoading(true, 'Fetching images...');
           const urlsArray = Array.from(urlsToFetch);
           
           fetch(GAS_WEB_APP_URL, {
@@ -432,25 +463,22 @@
                         const img = document.createElement('img');
                         img.src = res.images[url];
                         
-                        // 強制限制圖片最大寬高，避免寬度落差太大
+                        // 加入 object-fit: contain 確保圖片防壓扁變形
                         img.style.maxWidth = '550px'; 
-                        img.style.maxHeight = '280px'; 
+                        img.style.maxHeight = '300px'; 
                         img.style.width = '100%';
                         img.style.objectFit = 'contain'; 
                         
-                        img.style.borderRadius = '6px'; 
-                        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                         reportImages.appendChild(img);
                     }
                 }
-                
                 setTimeout(executeCanvas, 500);
             } else {
-                alert('圖片載入失敗: ' + res.error);
+                alert('Images load failed: ' + res.error);
                 executeCanvas();
             }
           }).catch(err => {
-              alert('圖片處理連線錯誤');
+              alert('Image fetch error');
               executeCanvas();
           });
       } else {
@@ -459,7 +487,7 @@
     }
 
     function executeCanvas() {
-        showLoading(true, '產生報表圖檔中...');
+        showLoading(true, 'Generating report...');
         const renderArea = document.getElementById('renderArea');
         html2canvas(renderArea, { scale: 2 }).then(canvas => {
           showLoading(false);
@@ -468,7 +496,7 @@
           document.getElementById('previewModal').style.display = 'flex';
         }).catch(err => { 
           showLoading(false); 
-          alert('產生預覽失敗'); 
+          alert('Generate failed'); 
         });
     }
 
