@@ -141,7 +141,8 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <!-- 讓 Item 吃掉所有剩下的空間 -->
+          <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
           <!-- PRICE 標題：置中，緊湊寬度 80px -->
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
           <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 125px -->
@@ -507,7 +508,7 @@
           <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
           
           <!-- 折數：右側加一點點 padding 讓它不會太貼金額 -->
-          <td style="padding: 12px 8px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+          <td style="padding: 12px 4px 12px 4px; text-align: right; width: 40px;">${discountHtml}</td>
           
           <!-- 金額：緊貼折數 -->
           <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 80px;">$${itemTotalStr}</td>
