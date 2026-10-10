@@ -144,38 +144,31 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 15px 10px 0; width: 50%; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 15px; text-align: center; width: 20%; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <th style="padding: 10px 0 10px 15px; text-align: center; width: 30%; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- 重新分配寬度：大幅增加 Item 空間，壓縮 Price 與 Discount -->
+          <th style="padding: 10px 15px 10px 0; width: 65%; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <th style="padding: 10px 4px; text-align: center; width: 15%; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <th style="padding: 10px 0 10px 15px; text-align: center; width: 20%; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
       
-      <!-- 總計區塊：直接加入 tfoot，確保框線與對齊 100% 貼合對應欄位 -->
       <tfoot>
         <tr><td colspan="3" style="height: 15px;"></td></tr>
         <tr>
-          <!-- Item 欄位留空 -->
           <td></td> 
           
-          <!-- 對齊 Price 欄位：置中對齊 Total -->
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 15px; text-align: center; vertical-align: top;">
+          <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">Total</div>
           </td>
           
-          <!-- 對齊 Discount 欄位：與上方項目完全一樣的 flexbox 對齊結構 -->
+          <!-- 修改 Total 數字與 Saved 區塊，確保不換行且對齊 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 0 15px 15px; vertical-align: top;">
-            <!-- 總計數字 -->
-            <div style="display: flex; justify-content: center; gap: 15px; align-items: center;">
-              <!-- 使用一個空的 width: 40px 去佔位(對應折數的位子) -->
-              <div style="width: 40px;"></div>
-              <!-- 保證總金額與折後金額同為 80px，絕對對齊不凸出 -->
-              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; width: 80px; text-align: right;" id="reportTotal">$0</div>
+            <div style="display: flex; justify-content: flex-end; align-items: center;">
+              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; text-align: right; white-space: nowrap;" id="reportTotal">$0</div>
             </div>
-            <!-- Saved 數字 -->
-            <div style="display: flex; justify-content: center; gap: 15px; align-items: center; margin-top: 4px;">
-              <div style="width: 40px;"></div>
-              <div style="color: #95a5a6; font-size: 12px; width: 80px; text-align: right;">(Saved <span id="reportSaved">$0</span>)</div>
+            <!-- 強制不換行 (white-space: nowrap;) -->
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 4px;">
+              <div style="color: #95a5a6; font-size: 12px; text-align: right; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
             </div>
           </td>
         </tr>
@@ -200,13 +193,11 @@
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
 
-    // 千分位格式化函數
     function formatNumber(num) {
         if (num === null || num === undefined) return '0';
         return Number(num).toLocaleString('en-US');
     }
 
-    // 垃圾桶 SVG
     const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
 
     window.onload = function() {
@@ -514,14 +505,14 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 確保與 tfoot 的結構一致
+        // 使用 flexbox 將折數和金額靠攏
         tr.innerHTML = `
           <td style="padding: 12px 15px 12px 0; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 15px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
+          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
           <td style="padding: 12px 0 12px 15px;">
-            <div style="display: flex; justify-content: center; gap: 15px; align-items: center;">
-                <div style="width: 40px; text-align: right;">${discountHtml}</div>
-                <div style="font-weight: 600; color: #2c3e50; width: 80px; text-align: right;">$${itemTotalStr}</div>
+            <div style="display: flex; justify-content: flex-end; gap: 6px; align-items: center;">
+                <div style="text-align: right;">${discountHtml}</div>
+                <div style="font-weight: 600; color: #2c3e50; text-align: right;">$${itemTotalStr}</div>
             </div>
           </td>
         `;
