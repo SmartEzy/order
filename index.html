@@ -141,11 +141,11 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <!-- PRICE 標題：置中，緊湊寬度 80px -->
+          <!-- 讓 Item 吃掉所有剩下的空間 -->
+          <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 125px -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 125px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- 縮小 Discount 標題寬度 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 95px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -426,11 +426,18 @@
         const priceStr = formatNumber(item.Price);
         const totalStr = formatNumber(item.Total);
 
+        // 原生四欄結構，每個數值皆被鎖在專屬寬度的格子內，達成完美置中與數值靠右
         tr.innerHTML = `
-          <td><input type="checkbox" class="row-check" value="${index}"></td>
-          <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
-          <td>$${priceStr}</td><td>${displayDiscount}</td><td style="font-weight: 500;">$${totalStr}</td><td>${imgHtml}</td>
-          <td style="text-align: center;"><button class="btn-icon" onclick="deleteOrder(${item.sheetRowIndex})" title="Delete">${trashIcon}</button></td>
+          <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
+          
+          <!-- Price 區塊：置中，維持狹窄寬度 -->
+          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
+          
+          <!-- 折數：縮小寬度，縮小 padding-right 讓它更貼近金額 -->
+          <td style="padding: 12px 4px 12px 4px; text-align: right; width: 30px;">${discountHtml}</td>
+          
+          <!-- 金額：縮小寬度限制 -->
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
         `;
         tbody.appendChild(tr);
       });
