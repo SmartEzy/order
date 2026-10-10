@@ -48,14 +48,12 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
-    /* 統一按鈕樣式：加入 min-width 讓三個按鈕等大 */
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
     .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; }
     .btn-icon:hover { fill: #d93025; }
 
-    /* 移除 btn-save 的預設覆蓋，只保留動作狀態的顏色 */
     .btn-save.saving { background-color: #9aa0a6; cursor: not-allowed; }
     .btn-save.saved { background-color: #1e8e3e; }
 
@@ -139,16 +137,17 @@
       </div>
     </div>
     
-    <!-- 啟用完美的 5 欄結構 -->
+    <!-- 完美對齊表格結構 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 4px; text-align: center; width: 90px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- 空白分隔欄位，把 Discount 推開 -->
-          <th style="padding: 10px 0; width: 50px; border-bottom: 1px solid #e0e0e0;"></th>
-          <!-- Discount 標題跨兩欄並完美置中 -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 130px; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- PRICE 欄位：鎖定極小寬度 (65px)，讓它只夠放數字，達成置中的視覺感 -->
+          <th style="padding: 10px 4px; text-align: right; width: 65px; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <!-- 空白分隔：縮小間距 -->
+          <th style="padding: 10px 0; width: 25px; border-bottom: 1px solid #e0e0e0;"></th>
+          <!-- DISCOUNT 標題：鎖定極小寬度 (105px) -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 105px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -156,17 +155,15 @@
       <tfoot>
         <tr><td colspan="5" style="height: 15px;"></td></tr>
         <tr>
-          <td></td> <!-- 留空對應 Item -->
+          <td></td> 
           
           <!-- TOTAL 標題放在 Price 欄位下方 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <!-- 空白分隔欄位延續上方的黑線 -->
           <td style="border-top: 2px solid #2c3e50;"></td>
           
-          <!-- 總金額放在 Discount 的兩欄下方 -->
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
             <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
@@ -505,13 +502,15 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 使用 5 欄結構，透過獨立欄位嚴格控制距離
+        // 資料列：對應表頭的 5 欄結構
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${priceStr}</td>
+          <!-- Price: 靠右對齊，因為寬度很小(65px)，會有置中的效果 -->
+          <td style="padding: 12px 4px; text-align: right; color: #7f8c8d; width: 65px;">$${priceStr}</td>
           <td></td> <!-- 空白分隔 -->
-          <td style="padding: 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
-          <td style="padding: 12px 4px; text-align: right; font-weight: 600; color: #2c3e50; width: 85px;">$${itemTotalStr}</td>
+          <!-- Discount: 折數與金額各自有極小的寬度，強迫靠緊 -->
+          <td style="padding: 12px 4px; text-align: right; width: 35px;">${discountHtml}</td>
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 70px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
