@@ -14,7 +14,6 @@
     h2 { margin-top: 0; font-size: 1.4rem; color: #1a73e8; text-align: center; }
     .panel { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-    /* --- 輸入區與拖曳區樣式 --- */
     .item-row {
       display: grid;
       grid-template-columns: 115px 90px 1fr 75px 85px 60px 35px 60px;
@@ -54,7 +53,6 @@
     .btn-success { background-color: #34a853; }
     .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
 
-    /* 歷史紀錄表格樣式 */
     .history-table-wrapper { overflow-x: auto; margin-top: 15px; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 10px 8px; border-bottom: 1px solid #ddd; text-align: left; }
@@ -62,11 +60,10 @@
     
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(255,255,255,0.8); z-index: 999; justify-content: center; align-items: center;
+      background: rgba(255,255,255,0.9); z-index: 999; justify-content: center; align-items: center; flex-direction: column;
       font-size: 18px; font-weight: bold; color: #1a73e8;
     }
     
-    /* 預覽 Modal 樣式 */
     #previewModal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;
@@ -90,9 +87,10 @@
 </head>
 <body>
   
-  <div id="loadingOverlay">處理中，請稍候...</div>
+  <div id="loadingOverlay">
+    <div id="loadingText">處理中，請稍候...</div>
+  </div>
 
-  <!-- 上半部：新增訂單 -->
   <div class="panel">
     <h2>1. 新增訂貨紀錄</h2>
     <div id="itemsContainer"></div>
@@ -102,7 +100,6 @@
     </div>
   </div>
 
-  <!-- 下半部：歷史紀錄列表 -->
   <div class="panel">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #ddd; padding-bottom: 5px;">
       <h2 style="margin: 0; color: #333;">2. 訂貨紀錄列表</h2>
@@ -123,23 +120,23 @@
     </div>
   </div>
 
-  <!-- 報表渲染區 (不可見) -->
+  <!-- 報表渲染區 -->
   <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
       <div style="text-align: right; font-size: 14px; color: #555; line-height: 1.6;">
         <div style="font-weight: bold; color: #333;" id="reportName">Name: </div>
-        <!-- 移除 Date: 文字，只留數值 -->
         <div id="reportDate"></div>
       </div>
     </div>
+    
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px;">Item</th>
           <th style="padding: 10px 4px; text-align: right; width: 90px;">Price</th>
-          <th style="padding: 10px 4px; text-align: right; width: 120px;">Discount</th>
-          <th style="padding: 10px 4px; text-align: right; width: 100px;">Total</th>
+          <!-- 合併 Discount 與 Total 標題的空間，並將 DISCOUNT 置中於兩者之上 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 220px;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -152,18 +149,15 @@
             <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;" id="reportSaved">0</td>
         </tr>
         <tr style="font-weight: bold; font-size: 20px; color: #2c3e50;">
-            <!-- 修改 Grand Total 為 Total -->
             <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;">Total:</td>
             <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;" id="reportTotal">0</td>
         </tr>
       </table>
     </div>
     
-    <!-- 產品圖片將會顯示在這裡 -->
-    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 15px;"></div>
+    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;"></div>
   </div>
 
-  <!-- 預覽 Modal -->
   <div id="previewModal">
     <div class="modal-content-wrapper">
       <button class="share-btn" onclick="shareOrDownloadImage()"><svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></button>
@@ -185,9 +179,12 @@
       fetchOrders();
     };
 
-    function showLoading(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
+    function showLoading(show, text = '處理中，請稍候...') { 
+        const overlay = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').innerText = text;
+        overlay.style.display = show ? 'flex' : 'none'; 
+    }
 
-    // --- 輸入區與拖曳上傳邏輯 ---
     function addItemRow() {
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
@@ -312,7 +309,7 @@
 
       if (!isValid) { alert('請填寫完整的品名與價格'); return; }
 
-      showLoading(true);
+      showLoading(true, '儲存資料中...');
       fetch(GAS_WEB_APP_URL, {
         method: 'POST', body: JSON.stringify({ action: 'saveOrders', orders: dataList })
       }).then(res => res.json()).then(res => {
@@ -326,7 +323,6 @@
       });
     }
 
-    // --- 歷史紀錄與產生報表邏輯 ---
     function fetchOrders() {
       fetch(GAS_WEB_APP_URL + "?action=getOrders").then(res => res.json()).then(res => {
         if (res.success) { allOrdersData = res.data; renderHistoryTable(); }
@@ -350,10 +346,8 @@
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
-        
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank">圖片</a>` : '-';
-        
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
@@ -377,12 +371,11 @@
       reportTbody.innerHTML = '';
       
       let grandTotal = 0; let grandSaved = 0;
-      let imagesSet = new Set(); 
+      let urlsToFetch = new Set(); 
 
       const firstIdx = selectedChecks[0].value;
       const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
       
-      // 直接填入日期數值，不加 "Date:"
       document.getElementById('reportDate').innerText = reportDateRaw;
       document.getElementById('reportName').innerText = `${allOrdersData[firstIdx].Name}`;
 
@@ -393,11 +386,10 @@
         grandSaved += parseFloat(item.Saved) || 0;
         
         const imageUrl = findImageUrl(item);
-        if (imageUrl) imagesSet.add(imageUrl);
+        if (imageUrl) urlsToFetch.add(imageUrl);
 
         let discountDisplay = '-';
         if (item.Discount !== '無' && item.Discount) {
-            // 包含折數與折後價
             discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span><br><span style="font-size: 11px; color: #7f8c8d;">($${itemTotal})</span>`;
         }
 
@@ -406,7 +398,7 @@
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <td style="padding: 12px 4px; text-align: right; line-height: 1.2;">${discountDisplay}</td>
+          <td style="padding: 12px 4px; text-align: center; line-height: 1.2;">${discountDisplay}</td>
           <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${itemTotal}</td>
         `;
         reportTbody.appendChild(tr);
@@ -415,55 +407,51 @@
       document.getElementById('reportSaved').innerText = `$${grandSaved}`;
       document.getElementById('reportTotal').innerText = `$${grandTotal}`;
 
-      // 載入圖片到報表下方，並確保圖片載入完成
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
       
-      let loadedCount = 0;
-      const totalImages = imagesSet.size;
-
-      if (totalImages === 0) {
-          executeCanvas();
-      } else {
-          showLoading(true);
-          imagesSet.forEach(url => {
-            const img = document.createElement('img');
-            img.crossOrigin = "anonymous";
-            
-            // 處理跨域圖片的一個小技巧：加上時間戳避免快取問題
-            img.src = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-            
-            img.style.maxHeight = '200px'; 
-            img.style.maxWidth = '100%';
-            img.style.borderRadius = '6px'; 
-            img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            
-            // 監聽圖片載入完成
-            img.onload = function() {
-                loadedCount++;
-                if (loadedCount === totalImages) {
-                    // 多給 500ms 讓畫面排版穩定
-                    setTimeout(executeCanvas, 500);
+      // 如果有圖片，向後端發送請求，取得 Base64 以避開 CORS 限制
+      if (urlsToFetch.size > 0) {
+          showLoading(true, '正在轉換雲端圖片...');
+          const urlsArray = Array.from(urlsToFetch);
+          
+          fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getImagesBase64', urls: urlsArray })
+          }).then(res => res.json()).then(res => {
+            if (res.success) {
+                // 將 Base64 圖片塞入 HTML
+                for (const url of urlsArray) {
+                    if (res.images[url]) {
+                        const img = document.createElement('img');
+                        img.src = res.images[url];
+                        img.style.maxHeight = '250px'; 
+                        img.style.maxWidth = '100%';
+                        img.style.borderRadius = '6px'; 
+                        img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                        reportImages.appendChild(img);
+                    }
                 }
-            };
-            
-            // 萬一圖片載入失敗，也要繼續走
-            img.onerror = function() {
-                loadedCount++;
-                if (loadedCount === totalImages) {
-                    setTimeout(executeCanvas, 500);
-                }
-            };
-            
-            reportImages.appendChild(img);
+                
+                // 等待一下下確保 DOM 更新
+                setTimeout(executeCanvas, 500);
+            } else {
+                alert('圖片載入失敗: ' + res.error);
+                executeCanvas();
+            }
+          }).catch(err => {
+              alert('圖片處理連線錯誤');
+              executeCanvas();
           });
+      } else {
+          executeCanvas();
       }
     }
 
     function executeCanvas() {
-        showLoading(true);
+        showLoading(true, '產生報表圖檔中...');
         const renderArea = document.getElementById('renderArea');
-        html2canvas(renderArea, { scale: 2, useCORS: true }).then(canvas => {
+        html2canvas(renderArea, { scale: 2 }).then(canvas => {
           showLoading(false);
           generatedCanvasDataUrl = canvas.toDataURL('image/jpeg', 0.9);
           document.getElementById('canvasResultImg').src = generatedCanvasDataUrl;
