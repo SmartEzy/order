@@ -137,11 +137,11 @@
       </div>
     </div>
     
+    <!-- 啟用原生四欄結構，達成完美的絕對對齊 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 讓 Item 吃掉所有剩下的空間 -->
-          <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
           <!-- PRICE 標題：置中，緊湊寬度 80px -->
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
           <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 125px -->
@@ -491,7 +491,7 @@
         const formattedDiscount = formatDiscountForDisplay(item.Discount);
         let discountHtml = '';
         if (formattedDiscount !== '-') {
-            // 維持黑字
+            // 改為深灰色/黑色字體
             discountHtml = `<span style="color: #333;">${formattedDiscount}</span>`;
         }
 
@@ -500,20 +500,18 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 原生四欄結構
+        // 原生四欄結構，每個數值皆被鎖在專屬寬度的格子內，達成完美置中與數值靠右
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
           
-          <!-- Price 區塊：置中，完全使用您提供的原始代碼 -->
-          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
-            <div style="width: 70px; margin-left: 0; text-align: right;">$${priceStr}</div>
-          </td>
+          <!-- Price 區塊：置中，維持狹窄寬度 (完全沒動) -->
+          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
           
-          <!-- 折數：加寬此欄位 (從35px -> 60px)，逼迫 85% 往右靠向金額 -->
-          <td style="padding: 12px 4px 12px 4px; text-align: right; width: 60px;">${discountHtml}</td>
+          <!-- 折數：右側 padding 歸零 (原本8px改為0px)，強迫文字往右移動 -->
+          <td style="padding: 12px 0px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
           
-          <!-- 金額：縮窄此欄位 (從85px -> 60px)，因為靠右對齊，會使其往左邊的 85% 靠攏 -->
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 60px;">$${itemTotalStr}</td>
+          <!-- 金額：緊貼折數 (完全沒動) -->
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 80px;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
