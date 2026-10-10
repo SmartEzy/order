@@ -133,29 +133,32 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #bdc3c7; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px;">Item</th>
-          <th style="padding: 10px 4px; text-align: right; width: 90px;">Price</th>
-          <!-- 合併 Discount 與 Total 標題的空間，並將 DISCOUNT 置中於兩者之上 -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 220px;">Discount</th>
+          <!-- 將 ITEM 欄位加寬，讓三個數值欄位向右靠攏 -->
+          <th style="padding: 10px 4px; width: 55%;">Item</th>
+          <th style="padding: 10px 4px; text-align: right; width: 15%;">Price</th>
+          <th style="padding: 10px 4px; text-align: right; width: 15%;">Discount</th>
+          <th style="padding: 10px 4px; text-align: right; width: 15%;">Total</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
     </table>
     
-    <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
-      <table style="width: 280px; font-size: 14px; text-align: right; border-collapse: collapse;">
+    <!-- 簡化總計區塊線條 -->
+    <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+      <table style="width: 250px; font-size: 14px; text-align: right; border-collapse: collapse;">
         <tr style="color: #95a5a6;">
-            <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;">Total Saved:</td>
-            <td style="padding: 8px 0; border-top: 1px solid #ecf0f1;" id="reportSaved">0</td>
+            <td style="padding: 12px 0 4px 0;">Total Saved:</td>
+            <td style="padding: 12px 0 4px 0;" id="reportSaved">0</td>
         </tr>
+        <!-- 只留上方一條稍粗的線，移除下方雙線，更加簡潔 -->
         <tr style="font-weight: bold; font-size: 20px; color: #2c3e50;">
-            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;">Total:</td>
-            <td style="padding: 12px 0; border-top: 2px solid #2c3e50; border-bottom: 4px double #2c3e50;" id="reportTotal">0</td>
+            <td style="padding: 8px 0; border-top: 2px solid #2c3e50;">Total:</td>
+            <td style="padding: 8px 0; border-top: 2px solid #2c3e50;" id="reportTotal">0</td>
         </tr>
       </table>
     </div>
     
-    <div id="reportImages" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center;"></div>
+    <div id="reportImages" style="margin-top: 35px; text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;"></div>
   </div>
 
   <div id="previewModal">
@@ -201,14 +204,18 @@
       row.dataset.imageId = "";
       row.dataset.imageUrl = "";
       
+      // 折扣預設 85%
       row.innerHTML = `
         <input type="date" class="item-date" value="${lastDate}" onclick="this.select()">
         <input type="text" class="item-name" placeholder="名字" value="${lastName}" onclick="this.select()">
         <input type="text" class="item-item" placeholder="品名" onclick="this.select()">
         <input type="number" class="item-price" placeholder="價格" onclick="this.select()">
         <select class="item-discount">
-          <option value="75%">75%</option><option value="85%">85%</option><option value="90%">90%</option>
-          <option value="無" selected>無</option><option value="自訂">自訂</option>
+          <option value="75%">75%</option>
+          <option value="85%" selected>85%</option>
+          <option value="90%">90%</option>
+          <option value="無">無</option>
+          <option value="自訂">自訂</option>
         </select>
         <input type="number" class="item-qty" placeholder="數量" value="1" inputmode="numeric" onclick="this.select()">
         <button class="btn btn-danger" onclick="removeRow(this)" style="padding: 10px 0;">×</button>
@@ -388,9 +395,10 @@
         const imageUrl = findImageUrl(item);
         if (imageUrl) urlsToFetch.add(imageUrl);
 
+        // 移除下方的 ($xxxx)，只顯示折數
         let discountDisplay = '-';
         if (item.Discount !== '無' && item.Discount) {
-            discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span><br><span style="font-size: 11px; color: #7f8c8d;">($${itemTotal})</span>`;
+            discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span>`;
         }
 
         const tr = document.createElement('tr');
@@ -398,7 +406,7 @@
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <td style="padding: 12px 4px; text-align: center; line-height: 1.2;">${discountDisplay}</td>
+          <td style="padding: 12px 4px; text-align: right; line-height: 1.2;">${discountDisplay}</td>
           <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${itemTotal}</td>
         `;
         reportTbody.appendChild(tr);
@@ -410,7 +418,6 @@
       const reportImages = document.getElementById('reportImages');
       reportImages.innerHTML = '';
       
-      // 如果有圖片，向後端發送請求，取得 Base64 以避開 CORS 限制
       if (urlsToFetch.size > 0) {
           showLoading(true, '正在轉換雲端圖片...');
           const urlsArray = Array.from(urlsToFetch);
@@ -420,20 +427,23 @@
             body: JSON.stringify({ action: 'getImagesBase64', urls: urlsArray })
           }).then(res => res.json()).then(res => {
             if (res.success) {
-                // 將 Base64 圖片塞入 HTML
                 for (const url of urlsArray) {
                     if (res.images[url]) {
                         const img = document.createElement('img');
                         img.src = res.images[url];
-                        img.style.maxHeight = '250px'; 
-                        img.style.maxWidth = '100%';
+                        
+                        // 強制限制圖片最大寬高，避免寬度落差太大
+                        img.style.maxWidth = '550px'; 
+                        img.style.maxHeight = '280px'; 
+                        img.style.width = '100%';
+                        img.style.objectFit = 'contain'; 
+                        
                         img.style.borderRadius = '6px'; 
                         img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                         reportImages.appendChild(img);
                     }
                 }
                 
-                // 等待一下下確保 DOM 更新
                 setTimeout(executeCanvas, 500);
             } else {
                 alert('圖片載入失敗: ' + res.error);
