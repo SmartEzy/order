@@ -33,7 +33,6 @@
     }
     input:focus, select:focus { border-color: #5f6368; outline: none; }
     
-    /* 拖曳區 */
     .drop-zone {
       width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -49,7 +48,6 @@
       justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
     }
 
-    /* 按鈕樣式 */
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; }
     .btn:hover { background-color: #3c4043; }
     
@@ -64,7 +62,7 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格樣式 */
+    /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -141,35 +139,34 @@
       </div>
     </div>
     
+    <!-- 完美對齊表格結構 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 重新分配寬度：大幅增加 Item 空間，壓縮 Price 與 Discount -->
-          <th style="padding: 10px 15px 10px 0; width: 65%; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <th style="padding: 10px 4px; text-align: center; width: 15%; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <th style="padding: 10px 0 10px 15px; text-align: center; width: 20%; border-bottom: 1px solid #e0e0e0;">Discount</th>
+          <!-- 重新分配寬度：Item(48%), Price(20%), Discount(跨兩欄32%) -->
+          <th style="padding: 10px 4px; width: 48%; border-bottom: 1px solid #e0e0e0;">Item</th>
+          <th style="padding: 10px 4px; text-align: center; width: 20%; border-bottom: 1px solid #e0e0e0;">Price</th>
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 32%; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
       
+      <!-- 將 Total 放進表尾，透過欄位對齊保證黑線完美貼合，不凸出 -->
       <tfoot>
-        <tr><td colspan="3" style="height: 15px;"></td></tr>
+        <tr><td colspan="4" style="height: 15px;"></td></tr>
         <tr>
+          <!-- 留空對應 Item 欄位 -->
           <td></td> 
           
+          <!-- 對應 Price 欄位：置中對齊 Total 標題並畫上黑線 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">Total</div>
           </td>
           
-          <!-- 修改 Total 數字與 Saved 區塊，確保不換行且對齊 -->
-          <td style="border-top: 2px solid #2c3e50; padding: 15px 0 15px 15px; vertical-align: top;">
-            <div style="display: flex; justify-content: flex-end; align-items: center;">
-              <div style="font-weight: bold; font-size: 20px; color: #2c3e50; text-align: right; white-space: nowrap;" id="reportTotal">$0</div>
-            </div>
-            <!-- 強制不換行 (white-space: nowrap;) -->
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 4px;">
-              <div style="color: #95a5a6; font-size: 12px; text-align: right; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
-            </div>
+          <!-- 對應 Discount 兩欄：靠右對齊總金額並畫上黑線 -->
+          <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
+            <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
+            <div style="color: #95a5a6; font-size: 12px; margin-top: 4px;">(Saved <span id="reportSaved">$0</span>)</div>
           </td>
         </tr>
       </tfoot>
@@ -505,16 +502,12 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
 
-        // 使用 flexbox 將折數和金額靠攏
+        // 使用獨立的四個表格欄位（<td/>）確保對齊
         tr.innerHTML = `
-          <td style="padding: 12px 15px 12px 0; color: #333; font-weight: 600;">${item.Item}</td>
+          <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">$${priceStr}</td>
-          <td style="padding: 12px 0 12px 15px;">
-            <div style="display: flex; justify-content: flex-end; gap: 6px; align-items: center;">
-                <div style="text-align: right;">${discountHtml}</div>
-                <div style="font-weight: 600; color: #2c3e50; text-align: right;">$${itemTotalStr}</div>
-            </div>
-          </td>
+          <td style="padding: 12px 8px 12px 0; text-align: right; width: 14%;">${discountHtml}</td>
+          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 18%;">$${itemTotalStr}</td>
         `;
         reportTbody.appendChild(tr);
       });
