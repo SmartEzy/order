@@ -145,11 +145,10 @@
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="border-bottom: 1px solid #e0e0e0; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <!-- 調整寬度分配 -->
-          <th style="padding: 10px 4px; width: 45%;">Item</th>
-          <th style="padding: 10px 4px; text-align: right; width: 20%;">Price</th>
-          <!-- DISCOUNT 標題置中，跨越「折數」與「折後價」兩欄 -->
-          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 35%;">Discount</th>
+          <!-- 重新設定寬度，讓數值靠右貼齊 -->
+          <th style="padding: 10px 4px; width: 60%;">Item</th>
+          <th style="padding: 10px 4px; text-align: right; width: 15%;">Price</th>
+          <th style="padding: 10px 4px; text-align: right; width: 25%;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -412,7 +411,6 @@
       const selectedChecks = document.querySelectorAll('.row-check:checked');
       if(selectedChecks.length === 0) { alert('請先勾選項目 (Select items first)'); return; }
 
-      // 1. 防呆：檢查是否所有勾選的訂單 Name 都相同
       let firstCheckedName = null;
       let hasDifferentNames = false;
       
@@ -435,7 +433,6 @@
         return;
       }
 
-      // 開始產生報表
       const reportTbody = document.getElementById('reportTbody');
       reportTbody.innerHTML = '';
       
@@ -458,23 +455,24 @@
         if (imageUrl) urlsToFetch.add(imageUrl);
 
         const formattedDiscount = formatDiscountForDisplay(item.Discount);
-        let discountDisplay = '-';
+        let discountHtml = '';
         if (formattedDiscount !== '-') {
-            discountDisplay = `<span style="color: #e74c3c;">${formattedDiscount}</span>`;
+            discountHtml = `<span style="color: #e74c3c;">${formattedDiscount}</span>`;
         }
 
         const tr = document.createElement('tr');
         tr.style.borderBottom = 'none';
         
-        // 2. 解決折數與金額的距離：
-        // 讓第一欄(折數)靠右對齊，第二欄(金額)靠左對齊
+        // 將 折數 與 折後價 放在同一個 <td> 裡面，使用 flexbox 讓它們分佈在左右兩邊，保持完美的對齊與間距
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <!-- 折數：靠右對齊，留一點內邊距避免太貼近 -->
-          <td style="padding: 12px 8px 12px 4px; text-align: right; width: 50%;">${discountDisplay}</td>
-          <!-- 金額：靠左對齊，緊連著折數 -->
-          <td style="padding: 12px 4px 12px 8px; text-align: left; font-weight: 500; color: #2c3e50; width: 50%;">$${itemTotal}</td>
+          <td style="padding: 12px 4px; text-align: right;">
+            <div style="display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
+                <div>${discountHtml}</div>
+                <div style="font-weight: 600; color: #2c3e50; min-width: 60px;">$${itemTotal}</div>
+            </div>
+          </td>
         `;
         reportTbody.appendChild(tr);
       });
