@@ -148,9 +148,9 @@
       <thead>
         <tr style="border-bottom: 1px solid #e0e0e0; color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px; width: 60%;">Item</th>
-          <th style="padding: 10px 4px; text-align: right; width: 15%;">Price</th>
-          <!-- 刪除 TOTAL 標題，將 DISCOUNT 跨兩欄並靠近數值 -->
-          <th colspan="2" style="padding: 10px 4px; text-align: right; width: 25%;">Discount</th>
+          <th style="padding: 10px 4px; text-align: right; width: 12%;">Price</th>
+          <!-- 將 DISCOUNT 標題設定為跨兩欄，且置中，對應下方的折數與折後價 -->
+          <th colspan="2" style="padding: 10px 4px; text-align: center; width: 28%;">Discount</th>
         </tr>
       </thead>
       <tbody id="reportTbody"></tbody>
@@ -169,7 +169,6 @@
       </table>
     </div>
     
-    <!-- 加入 object-fit 避免壓扁 -->
     <div id="reportImages" style="margin-top: 40px; text-align: center; display: flex; flex-direction: column; gap: 20px; align-items: center;"></div>
   </div>
 
@@ -375,6 +374,19 @@
         return null;
     }
 
+    // 歷史清單中的折數處理，將 0.85 轉為 85%
+    function formatDiscountForDisplay(discountVal) {
+        if (!discountVal || discountVal === '無' || discountVal === '-') return '-';
+        // 如果已經有 % 符號，直接回傳
+        if (String(discountVal).includes('%')) return discountVal;
+        // 如果是 0.85 這種純數值，轉成 85%
+        let num = parseFloat(discountVal);
+        if (!isNaN(num) && num < 1 && num > 0) {
+            return Math.round(num * 100) + '%';
+        }
+        return discountVal;
+    }
+
     function renderHistoryTable() {
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
@@ -386,10 +398,12 @@
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Img</a>` : '-';
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
+        const displayDiscount = formatDiscountForDisplay(item.Discount);
+
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
-          <td>$${item.Price || 0}</td><td>${item.Discount || '-'}</td><td style="font-weight: 500;">$${item.Total || 0}</td><td>${imgHtml}</td>
+          <td>$${item.Price || 0}</td><td>${displayDiscount}</td><td style="font-weight: 500;">$${item.Total || 0}</td><td>${imgHtml}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -425,11 +439,11 @@
         const imageUrl = findImageUrl(item);
         if (imageUrl) urlsToFetch.add(imageUrl);
 
-        // 折扣改用百分比顯示，並且靠近總額
+        // 轉換報表中的折數顯示為百分比
+        const formattedDiscount = formatDiscountForDisplay(item.Discount);
         let discountDisplay = '-';
-        if (item.Discount !== '無' && item.Discount) {
-            // 如果輸入是 "85%" 字串，直接顯示；如果是數值，就顯示原本的
-            discountDisplay = `<span style="color: #e74c3c;">${item.Discount}</span>`;
+        if (formattedDiscount !== '-') {
+            discountDisplay = `<span style="color: #e74c3c;">${formattedDiscount}</span>`;
         }
 
         const tr = document.createElement('tr');
@@ -437,8 +451,10 @@
         tr.innerHTML = `
           <td style="padding: 12px 4px; color: #333;">${item.Item}</td>
           <td style="padding: 12px 4px; text-align: right; color: #7f8c8d;">$${item.Price}</td>
-          <td style="padding: 12px 2px; text-align: right; width: 60px;">${discountDisplay}</td>
-          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50;">$${itemTotal}</td>
+          <!-- 折數：置中對齊標題 -->
+          <td style="padding: 12px 2px; text-align: center; width: 14%;">${discountDisplay}</td>
+          <!-- 折後總價：靠右對齊 -->
+          <td style="padding: 12px 4px; text-align: right; font-weight: 500; color: #2c3e50; width: 14%;">$${itemTotal}</td>
         `;
         reportTbody.appendChild(tr);
       });
@@ -463,11 +479,10 @@
                         const img = document.createElement('img');
                         img.src = res.images[url];
                         
-                        // 加入 object-fit: contain 確保圖片防壓扁變形
-                        img.style.maxWidth = '550px'; 
-                        img.style.maxHeight = '300px'; 
+                        // 解決圖片變形：使用百分比寬度並讓高度自動縮放 (保持比例)
                         img.style.width = '100%';
-                        img.style.objectFit = 'contain'; 
+                        img.style.height = 'auto';
+                        img.style.maxWidth = '550px'; 
                         
                         reportImages.appendChild(img);
                     }
