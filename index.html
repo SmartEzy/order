@@ -17,35 +17,42 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f7f9fa; margin: 0; padding: 30px 20px; color: #333;
-      max-width: 950px; margin-left: auto; margin-right: auto;
+      max-width: 1200px; margin-left: auto; margin-right: auto;
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入區樣式 --- */
+    /* --- 輸入區樣式 (已加寬並適應換購欄位) --- */
     .item-row {
       display: grid;
-      grid-template-columns: 140px 90px 1fr 95px 85px 60px 35px 60px;
-      gap: 8px; margin-bottom: 12px; align-items: center;
+      grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 35px 60px;
+      gap: 6px; margin-bottom: 12px; align-items: start;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
       .item-row {
-        grid-template-columns: 1fr 1fr 60px;
-        background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
+        grid-template-columns: 1fr 1fr 1fr 60px;
+        background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
+        gap: 10px;
       }
-      .drop-zone { grid-row: span 2; grid-column: 3; } 
+      .item-date, .item-name { grid-column: span 1; }
+      .item-item { grid-column: span 2; }
+      .item-price, .item-discount, .item-qty { grid-column: span 1; }
+      .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
+      .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
     }
     
     input, select {
-      padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;
-      color: #333; background: #fff;
+      padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%; box-sizing: border-box;
+      color: #333; background: #fff; height: 36px;
     }
     input:focus, select:focus { border-color: #5f6368; outline: none; }
+    input.trade-input { background-color: #fffbf0; border-color: #fce8b2; }
+    input.trade-input::placeholder { color: #b39b56; }
     
     .drop-zone {
       width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
       background-color: #f8f9fa; background-size: cover; background-position: center;
-      position: relative; overflow: hidden; transition: 0.2s;
+      position: relative; overflow: hidden; transition: 0.2s; margin-top: -2px;
     }
     .drop-zone.dragover { border-color: #5f6368; background-color: #e8eaed; }
     .drop-text { font-size: 11px; color: #777; text-align: center; pointer-events: none; }
@@ -59,7 +66,7 @@
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
-    .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; }
+    .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; margin-top: 4px; }
     .btn-icon:hover { fill: #d93025; }
 
     .btn-save.saving { background-color: #9aa0a6; cursor: not-allowed; }
@@ -70,9 +77,9 @@
 
     /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
-    table.history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table.history-table th, table.history-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
-    table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; }
+    table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
+    table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
     
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -124,12 +131,14 @@
         <thead>
           <tr>
             <th style="width: 30px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
-            <th>Date</th><th>Name</th><th>Item</th><th>Price</th><th>Disc</th><th>Total</th><th>Image</th>
-            <th style="width: 40px; text-align: center;"></th>
+            <th>Date</th><th>Name</th><th>Item</th><th>Price</th><th>Disc</th>
+            <th>Trade-In Info</th><th>Trade-In Val</th>
+            <th>Final Total</th><th>Image</th>
+            <th style="width: 30px; text-align: center;"></th>
           </tr>
         </thead>
         <tbody id="historyTbody">
-          <tr><td colspan="9" style="text-align:center; color: #999;">Loading...</td></tr>
+          <tr><td colspan="11" style="text-align:center; color: #999;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -145,14 +154,11 @@
       </div>
     </div>
     
-    <!-- 啟用原生四欄結構，達成完美的絕對對齊 -->
     <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
       <thead>
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
-          <th style="padding: 10px 4px; border-bottom: 1px solid #e0e0e0;">Item</th>
-          <!-- PRICE 標題：置中，緊湊寬度 80px -->
+          <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          <!-- DISCOUNT 標題：跨兩欄置中，涵蓋總寬 110px -->
           <th colspan="2" style="padding: 10px 4px; text-align: center; width: 110px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
@@ -163,12 +169,10 @@
         <tr>
           <td></td> 
           
-          <!-- TOTAL 完美置中於 PRICE 欄位下方 -->
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
           
-          <!-- 總金額對齊上方 Discount 區塊，黑線連貫 -->
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
             <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
@@ -230,18 +234,22 @@
       row.dataset.imageUrl = "";
       
       row.innerHTML = `
-        <input type="date" class="item-date" value="${lastDate}" onclick="this.select()">
-        <input type="text" class="item-name" placeholder="Name" value="${lastName}" onclick="this.select()">
-        <input type="text" class="item-item" placeholder="Item" onclick="this.select()">
-        <input type="number" class="item-price" placeholder="Price" onclick="this.select()">
-        <select class="item-discount">
+        <input type="date" class="item-date" value="${lastDate}" onclick="this.select()" title="Date">
+        <input type="text" class="item-name" placeholder="Name" value="${lastName}" onclick="this.select()" title="Name">
+        <input type="text" class="item-item" placeholder="Item" onclick="this.select()" title="Item">
+        <input type="number" class="item-price" placeholder="Price" onclick="this.select()" title="Price">
+        <select class="item-discount" title="Discount">
           <option value="75%">75%</option>
           <option value="85%" selected>85%</option>
           <option value="90%">90%</option>
           <option value="無">無</option>
-          <option value="自訂">自訂</option>
         </select>
-        <input type="number" class="item-qty" placeholder="Qty" value="1" inputmode="numeric" onclick="this.select()">
+        <input type="number" class="item-qty" placeholder="Qty" value="1" inputmode="numeric" onclick="this.select()" title="Qty">
+        
+        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN (Opt)" onclick="this.select()" title="換購序號 (選填)">
+        <input type="text" class="trade-input trade-in-name" placeholder="Trade Item" onclick="this.select()" title="換購品名 (選填)">
+        <input type="number" class="trade-input trade-in-amount" placeholder="-Trade $" onclick="this.select()" title="換購折抵金額 (選填)">
+        
         <button class="btn-icon" onclick="removeRow(this)" title="Remove item">${trashIcon}</button>
         <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
           <span class="drop-text">+ Image</span>
@@ -320,6 +328,10 @@
         const discount = row.querySelector('.item-discount').value;
         const qty = parseInt(row.querySelector('.item-qty').value) || 1;
         
+        const tradeInSerial = row.querySelector('.trade-in-serial').value.trim();
+        const tradeInName = row.querySelector('.trade-in-name').value.trim();
+        const tradeInAmount = parseFloat(row.querySelector('.trade-in-amount').value) || 0;
+        
         const rowImageId = row.dataset.imageId || "";
         const rowImageUrl = row.dataset.imageUrl || "";
 
@@ -331,12 +343,16 @@
         else if (discount === '90%') discountRate = 0.90;
 
         const unitDiscountPrice = Math.round(price * discountRate);
+        const subTotal = unitDiscountPrice * qty;
+        const finalTotal = subTotal - tradeInAmount; 
+        
         if(qty > 1) itemName = `${itemName} (x${qty})`;
 
         dataList.push({
           date: date, name: name, itemName: itemName, price: price, discount: discount,
-          discountPrice: unitDiscountPrice, savedAmount: (price - unitDiscountPrice) * qty,
-          total: unitDiscountPrice * qty, 
+          discountPrice: unitDiscountPrice, savedAmount: ((price - unitDiscountPrice) * qty) + tradeInAmount,
+          tradeInSerial: tradeInSerial, tradeInName: tradeInName, tradeInAmount: tradeInAmount,
+          total: finalTotal, 
           imageId: rowImageId, imageUrl: rowImageUrl 
         });
       });
@@ -377,7 +393,7 @@
     function fetchOrders() {
       fetch(GAS_WEB_APP_URL + "?action=getOrders").then(res => res.json()).then(res => {
         if (res.success) { allOrdersData = res.data; renderHistoryTable(); }
-      }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="9">Failed to load</td></tr>`; });
+      }).catch(err => { document.getElementById('historyTbody').innerHTML = `<tr><td colspan="11">Failed to load</td></tr>`; });
     }
 
     function deleteOrder(sheetRowIndex) {
@@ -422,23 +438,35 @@
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
       if(allOrdersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color: #999;">No records found</td></tr>`; return;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; color: #999;">No records found</td></tr>`; return;
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         const imageUrl = findImageUrl(item);
-        // 將 Img 改為 Image
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Image</a>` : '-';
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
         const displayDiscount = formatDiscountForDisplay(item.Discount);
         
         const priceStr = formatNumber(item.Price);
         const totalStr = formatNumber(item.Total);
+        
+        // 抓取換購資訊 (依賴 Code.gs 取出的欄位名稱)
+        const serial = item['Trade-In Serial'] || '';
+        const name = item['Trade-In Name'] || '';
+        const tAmount = parseFloat(item['Trade-In Amount']) || 0;
+        
+        let tradeInInfo = '-';
+        if (name || serial) {
+            tradeInInfo = `${name} <span style="color:#999;font-size:10px;">${serial ? '('+serial+')' : ''}</span>`;
+        }
+        const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
 
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
-          <td>$${priceStr}</td><td>${displayDiscount}</td><td style="font-weight: 500;">$${totalStr}</td><td>${imgHtml}</td>
+          <td>$${priceStr}</td><td>${displayDiscount}</td>
+          <td style="color:#8a6d3b;">${tradeInInfo}</td><td style="color:#d9534f;">${tradeInAmountStr}</td>
+          <td style="font-weight: 600; color:#2c3e50;">$${totalStr}</td><td>${imgHtml}</td>
           <td style="text-align: center;"><button class="btn-icon" onclick="deleteOrder(${item.sheetRowIndex})" title="Delete">${trashIcon}</button></td>
         `;
         tbody.appendChild(tr);
@@ -500,31 +528,68 @@
         const formattedDiscount = formatDiscountForDisplay(item.Discount);
         let discountHtml = '';
         if (formattedDiscount !== '-') {
-            // 改為深灰色/黑色字體
             discountHtml = `<span style="color: #333;">${formattedDiscount}</span>`;
         }
 
-        const tr = document.createElement('tr');
-        
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
+        
+        // 抓取換購邏輯
+        const tradeInSerial = item['Trade-In Serial'] || '';
+        const tradeInName = item['Trade-In Name'] || '';
+        const tradeInAmount = parseFloat(item['Trade-In Amount']) || 0;
+        const hasTradeIn = tradeInAmount > 0;
+        const subTotalBeforeTradeIn = itemTotal + tradeInAmount;
 
-        // 原生四欄結構，每個數值皆被鎖在專屬寬度的格子內，達成完美置中與數值靠右
-        tr.innerHTML = `
-          <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-          
-          <!-- Price 區塊：外層置中，內層固定 55px 寬度並讓數字靠右對齊 -->
-          <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
-            <div style="width: 48px; margin: 0 auto; text-align: right;">$${priceStr}</div>
-          </td>
-          
-          <!-- 折數：右側 padding 歸零 (原本8px改為0px)，強迫文字往右移動 -->
-          <td style="padding: 12px 0px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
-          
-          <!-- 金額：緊貼折數 (完全沒動) -->
-          <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
-        `;
-        reportTbody.appendChild(tr);
+        const tr = document.createElement('tr');
+        
+        if (!hasTradeIn) {
+            tr.innerHTML = `
+              <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
+              
+              <!-- PRICE 內層 62px 讓數字靠右，外層置中對齊標題 -->
+              <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
+                <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
+              </td>
+              
+              <!-- 折數：緊靠右側 -->
+              <td style="padding: 12px 0px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+              
+              <!-- 金額 -->
+              <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
+            `;
+            reportTbody.appendChild(tr);
+        } else {
+            tr.innerHTML = `
+              <td style="padding: 12px 4px 4px 4px; color: #333; font-weight: 600;">${item.Item}</td>
+              
+              <!-- PRICE 內層 62px 讓數字靠右，外層置中對齊標題 -->
+              <td style="padding: 12px 4px 4px 4px; text-align: center; color: #7f8c8d;">
+                <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
+              </td>
+              
+              <td style="padding: 12px 0px 4px 4px; text-align: right; width: 45px;">${discountHtml}</td>
+              <td style="padding: 12px 4px 4px 0; text-align: right; font-weight: 600; color: #7f8c8d; width: 65px;">$${formatNumber(subTotalBeforeTradeIn)}</td>
+            `;
+            reportTbody.appendChild(tr);
+            
+            const trTrade = document.createElement('tr');
+            const tradeItemDisplay = `Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
+            trTrade.innerHTML = `
+              <td style="padding: 0px 4px 12px 14px; color: #e67e22; font-size: 12px;">↳ ${tradeItemDisplay}</td>
+              <td style="padding: 0px 4px 12px 4px;"></td>
+              <td style="padding: 0px 0px 12px 4px; text-align: right; font-size: 12px; color: #e67e22;">-</td>
+              <td style="padding: 0px 4px 12px 0; text-align: right; font-weight: 600; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
+            `;
+            reportTbody.appendChild(trTrade);
+            
+            const trSub = document.createElement('tr');
+            trSub.innerHTML = `
+                <td colspan="3" style="padding: 4px;"></td>
+                <td style="padding: 4px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50;">$${itemTotalStr}</td>
+            `;
+            reportTbody.appendChild(trSub);
+        }
       });
 
       document.getElementById('reportSaved').innerText = `$${formatNumber(grandSaved)}`;
