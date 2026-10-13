@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order System</title>
   
-  <!-- 加入主畫面 Icon 與網頁圖示設定 -->
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,7 +20,6 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入區樣式 (已加寬並適應換購欄位) --- */
     .item-row {
       display: grid;
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 35px 60px;
@@ -75,7 +73,6 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -144,7 +141,6 @@
     </div>
   </div>
 
-  <!-- 報表渲染區 -->
   <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
@@ -168,11 +164,9 @@
         <tr><td colspan="4" style="height: 15px;"></td></tr>
         <tr>
           <td></td> 
-          
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
-          
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
             <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
@@ -450,7 +444,7 @@
         const priceStr = formatNumber(item.Price);
         const totalStr = formatNumber(item.Total);
         
-        // 抓取換購資訊 (依賴 Code.gs 取出的欄位名稱)
+        // 抓取換購資訊
         const serial = item['Trade-In Serial'] || '';
         const name = item['Trade-In Name'] || '';
         const tAmount = parseFloat(item['Trade-In Amount']) || 0;
@@ -534,7 +528,6 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
         
-        // 抓取換購邏輯
         const tradeInSerial = item['Trade-In Serial'] || '';
         const tradeInName = item['Trade-In Name'] || '';
         const tradeInAmount = parseFloat(item['Trade-In Amount']) || 0;
@@ -546,28 +539,19 @@
         if (!hasTradeIn) {
             tr.innerHTML = `
               <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-              
-              <!-- PRICE 內層 62px 讓數字靠右，外層置中對齊標題 -->
               <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
                 <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
               </td>
-              
-              <!-- 折數：緊靠右側 -->
               <td style="padding: 12px 0px 12px 4px; text-align: right; width: 45px;">${discountHtml}</td>
-              
-              <!-- 金額 -->
               <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
             `;
             reportTbody.appendChild(tr);
         } else {
             tr.innerHTML = `
               <td style="padding: 12px 4px 4px 4px; color: #333; font-weight: 600;">${item.Item}</td>
-              
-              <!-- PRICE 內層 62px 讓數字靠右，外層置中對齊標題 -->
               <td style="padding: 12px 4px 4px 4px; text-align: center; color: #7f8c8d;">
                 <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
               </td>
-              
               <td style="padding: 12px 0px 4px 4px; text-align: right; width: 45px;">${discountHtml}</td>
               <td style="padding: 12px 4px 4px 0; text-align: right; font-weight: 600; color: #7f8c8d; width: 65px;">$${formatNumber(subTotalBeforeTradeIn)}</td>
             `;
