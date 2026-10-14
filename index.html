@@ -73,13 +73,11 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    /* 歷史紀錄表格 */
     .history-table-wrapper { overflow-x: auto; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
     
-    /* 👇 縮小歷史清單的 Checkbox 尺寸 👇 */
     input.row-check, input#selectAll {
         width: 16px;
         height: 16px;
@@ -149,7 +147,6 @@
     </div>
   </div>
 
-  <!-- 報表渲染區 -->
   <div id="renderArea" style="position: absolute; left: -9999px; width: 650px; background: #ffffff; padding: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px;">
       <h2 style="margin: 0; font-size: 26px; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h2>
@@ -164,8 +161,6 @@
         <tr style="color: #7f8c8d; font-size: 12px; text-transform: uppercase;">
           <th style="padding: 10px 4px; width: 100%; border-bottom: 1px solid #e0e0e0;">Item</th>
           <th style="padding: 10px 4px; text-align: center; width: 80px; border-bottom: 1px solid #e0e0e0;">Price</th>
-          
-          <!-- 👇 增加 Price 與 Discount 之間的距離 (利用 padding-left 推開) 👇 -->
           <th colspan="2" style="padding: 10px 4px 10px 24px; text-align: center; width: 110px; border-bottom: 1px solid #e0e0e0;">Discount</th>
         </tr>
       </thead>
@@ -175,11 +170,9 @@
         <tr><td colspan="4" style="height: 15px;"></td></tr>
         <tr>
           <td></td> 
-          
           <td style="border-top: 2px solid #2c3e50; padding: 15px 4px; text-align: center; vertical-align: top;">
             <div style="font-weight: bold; font-size: 18px; color: #2c3e50;">TOTAL</div>
           </td>
-          
           <td colspan="2" style="border-top: 2px solid #2c3e50; padding: 15px 4px 15px 0; text-align: right; vertical-align: top;">
             <div style="font-weight: bold; font-size: 20px; color: #2c3e50;" id="reportTotal">$0</div>
             <div style="color: #95a5a6; font-size: 12px; margin-top: 4px; white-space: nowrap;">(Saved <span id="reportSaved">$0</span>)</div>
@@ -240,6 +233,7 @@
       row.dataset.imageId = "";
       row.dataset.imageUrl = "";
       
+      // 👇 調整 Placeholder：Trade SN / Item / $ 👇
       row.innerHTML = `
         <input type="date" class="item-date" value="${lastDate}" onclick="this.select()" title="Date">
         <input type="text" class="item-name" placeholder="Name" value="${lastName}" onclick="this.select()" title="Name">
@@ -253,9 +247,9 @@
         </select>
         <input type="number" class="item-qty" placeholder="Qty" value="1" inputmode="numeric" onclick="this.select()" title="Qty">
         
-        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN (Opt)" onclick="this.select()" title="換購序號 (選填)">
-        <input type="text" class="trade-input trade-in-name" placeholder="Trade Item" onclick="this.select()" title="換購品名 (選填)">
-        <input type="number" class="trade-input trade-in-amount" placeholder="-Trade $" onclick="this.select()" title="換購折抵金額 (選填)">
+        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" onclick="this.select()" title="換購序號 (選填)">
+        <input type="text" class="trade-input trade-in-name" placeholder="Item" onclick="this.select()" title="換購品名 (選填)">
+        <input type="number" class="trade-input trade-in-amount" placeholder="$" onclick="this.select()" title="換購折抵金額 (選填)">
         
         <button class="btn-icon" onclick="removeRow(this)" title="Remove item">${trashIcon}</button>
         <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
@@ -511,8 +505,8 @@
             tradeInInfo = `${name} <span style="color:#999;font-size:10px;">${serial ? '('+serial+')' : ''}</span>`;
         }
         
-        // 👇 讓歷史清單裡的換購金額也加上折角箭頭 ↳ 👇
-        const tradeInAmountStr = tAmount > 0 ? `↳ -$${formatNumber(tAmount)}` : '-';
+        // 👇 歷史清單的換購金額：拿掉折角箭頭 ↳ 👇
+        const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
 
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
@@ -602,8 +596,8 @@
                 <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
               </td>
               
-              <!-- 👇 這裡也利用 padding-left 推開，並將 padding-right 設為 4px 讓 85% 不要死貼金額 👇 -->
-              <td style="padding: 12px 4px 12px 24px; text-align: right; width: 45px;">${discountHtml}</td>
+              <!-- 👇 加大 85% 右側的 padding (從原本的 4px 改為 12px)，並靠右對齊 👇 -->
+              <td style="padding: 12px 12px 12px 24px; text-align: right; width: 45px;">${discountHtml}</td>
               <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
             `;
             reportTbody.appendChild(tr);
@@ -615,20 +609,21 @@
               </td>
               
               <!-- 👇 調整折數的右邊距 👇 -->
-              <td style="padding: 12px 4px 4px 24px; text-align: right; width: 45px;">${discountHtml}</td>
+              <td style="padding: 12px 12px 4px 24px; text-align: right; width: 45px;">${discountHtml}</td>
               <td style="padding: 12px 4px 4px 0; text-align: right; font-weight: 600; color: #7f8c8d; width: 65px;">$${formatNumber(subTotalBeforeTradeIn)}</td>
             `;
             reportTbody.appendChild(tr);
             
             const trTrade = document.createElement('tr');
+            // 拿掉左側的折角箭頭
             const tradeItemDisplay = `Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
             
-            // 👇 將 Trade-in 金額前面的負號改為折角箭頭 ↳ 👇
+            // 👇 折角箭頭移到 85% 下方，且清除金額前多餘的 - 標籤 👇
             trTrade.innerHTML = `
-              <td style="padding: 0px 4px 12px 14px; color: #e67e22; font-size: 12px;">↳ ${tradeItemDisplay}</td>
+              <td style="padding: 0px 4px 12px 14px; color: #e67e22; font-size: 12px;">${tradeItemDisplay}</td>
               <td style="padding: 0px 4px 12px 4px;"></td>
-              <td style="padding: 0px 0px 12px 4px; text-align: right; font-size: 12px; color: #e67e22;">-</td>
-              <td style="padding: 0px 4px 12px 0; text-align: right; font-weight: 600; color: #e67e22; border-bottom: 1px solid #eee;">↳ -$${formatNumber(tradeInAmount)}</td>
+              <td style="padding: 0px 12px 12px 4px; text-align: right; font-size: 14px; color: #e67e22;">↳</td>
+              <td style="padding: 0px 4px 12px 0; text-align: right; font-weight: 600; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
             `;
             reportTbody.appendChild(trTrade);
             
