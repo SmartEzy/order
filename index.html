@@ -20,7 +20,6 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
-    /* --- 輸入框共用樣式 (強制鎖定高度與重置 iOS 樣式) --- */
     input, select {
       -webkit-appearance: none; 
       -moz-appearance: none;
@@ -45,73 +44,55 @@
     input.trade-input { background-color: #fffbf0; border-color: #fce8b2; }
     input.trade-input::placeholder { color: #b39b56; }
 
-    /* =========================================
-       1. 電腦版 Grid (回歸完美的一行流) 
-       ========================================= */
     .item-row {
       display: grid;
-      /* 剛好 11 個參數，精準對應 11 個元件 */
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
     
-    /* =========================================
-       2. 平板版 Grid (1024px 以下) 
-       ========================================= */
     @media (max-width: 1024px) {
       .item-row {
-        grid-template-columns: repeat(12, 1fr);
+        grid-template-columns: 1fr 1fr 1fr 60px 35px;
         background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
         gap: 10px;
       }
-      .item-date { grid-column: span 3; }
-      .item-name { grid-column: span 3; }
-      .item-item { grid-column: span 6; }
-      
-      .item-price { grid-column: span 3; }
-      .item-discount { grid-column: span 2; }
-      .item-qty { grid-column: span 2; }
-      .trade-in-serial { grid-column: span 5; }
-      
-      .trade-in-name { grid-column: span 4; }
-      .trade-in-amount { grid-column: span 4; }
-      .drop-zone { grid-column: 10 / span 2; justify-self: end; }
-      .btn-icon.delete { grid-column: 12 / span 1; justify-self: center; margin-top: 0; }
+      .item-date, .item-name { grid-column: span 1; }
+      .item-item { grid-column: span 2; }
+      .item-price, .item-discount, .item-qty { grid-column: span 1; }
+      .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
+      .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
+      .btn-icon { grid-row: span 3; grid-column: 5; align-self: center; }
     }
 
-    /* =========================================
-       3. 手機版 Grid (768px 以下 - 緊湊優化版) 
-       ========================================= */
     @media (max-width: 768px) {
       body { padding: 12px 8px; }
       .panel { padding: 12px; margin-bottom: 15px; }
       
       .item-row {
-        grid-template-columns: repeat(12, 1fr);
-        gap: 6px; padding: 12px;
-        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px; 
+        padding: 12px;
+        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
       }
       
-      /* 第一排：Date (大約60%) + Name (大約40%) */
-      .item-date { grid-column: span 7; }
-      .item-name { grid-column: span 5; }
+      .mobile-row-1 { display: flex; gap: 8px; width: 100%; }
+      .item-date { flex: 3; }
+      .item-name { flex: 2; }
       
-      /* 第二排：Item (滿版) */
-      .item-item { grid-column: span 12; }
+      .item-item { width: 100%; }
       
-      /* 第三排：Price + Disc + Qty */
-      .item-price { grid-column: span 5; }
-      .item-discount { grid-column: span 4; }
-      .item-qty { grid-column: span 3; }
+      .mobile-row-3 { display: flex; gap: 8px; width: 100%; }
+      .item-price, .item-discount, .item-qty { flex: 1; }
       
-      /* 第四排：Trade SN (短) + Trade Item (長) */
-      .trade-in-serial { grid-column: span 5; }
-      .trade-in-name { grid-column: span 7; }
+      .mobile-row-4 { display: flex; gap: 8px; width: 100%; }
+      .trade-in-serial { flex: 1; }
+      .trade-in-name { flex: 1.5; }
       
-      /* 第五排：Trade $ + 圖片 + 垃圾桶 (對齊右下角) */
-      .trade-in-amount { grid-column: span 5; align-self: center; margin-top: 4px; }
-      .drop-zone { grid-column: 9 / span 2; justify-self: end; width: 60px; height: 36px; margin: 4px 0 0 0; }
-      .btn-icon.delete { grid-column: 11 / span 2; justify-self: center; width: 36px; height: 36px; margin: 4px 0 0 0; padding: 6px; }
+      .mobile-row-5 { display: flex; gap: 8px; width: 100%; align-items: center; justify-content: flex-end; }
+      .trade-in-amount { width: 100px; flex-shrink: 0; }
+      .drop-zone { width: 60px; height: 36px; margin: 0; flex-shrink: 0; }
+      .btn-icon.delete { width: 36px; height: 36px; margin: 0; padding: 6px; flex-shrink: 0; }
     }
     
     .drop-zone {
@@ -321,6 +302,8 @@
       
       const dateVal = itemData ? (itemData.Date ? itemData.Date.toString().split('T')[0] : '') : lastDate;
       const nameVal = itemData ? (itemData.Name || '') : lastName;
+      
+      // 處理品名附帶的數量 (xN)
       let itemClean = itemData ? (itemData.Item || '') : '';
       let qtyVal = 1;
       if (itemClean) {
@@ -330,8 +313,26 @@
               itemClean = itemClean.replace(/ \(x\d+\)$/, '');
           }
       }
+      
       const priceVal = itemData ? (itemData.Price || '') : '';
-      const discVal = itemData ? (itemData.Discount || '85%') : '85%';
+      
+      // ⭐ 修正折扣載入 Bug：如果 Google Sheets 回傳 0.85，把它轉回 "85%"
+      let discVal = '85%';
+      if (itemData && itemData.Discount !== undefined) {
+          let val = String(itemData.Discount);
+          if (val === '無' || val === '-') {
+              discVal = '無';
+          } else if (val.includes('%')) {
+              discVal = val;
+          } else {
+              let num = parseFloat(val);
+              if (!isNaN(num) && num > 0 && num <= 1) {
+                  discVal = Math.round(num * 100) + '%';
+              } else {
+                  discVal = val;
+              }
+          }
+      }
       
       const tsVal = itemData ? (itemData['Trade-In Serial'] || '') : '';
       const tnVal = itemData ? (itemData['Trade-In Name'] || '') : '';
@@ -344,30 +345,40 @@
           hasImageClass = "has-image";
       }
 
-      // 👇 拆除了多餘的 <div> 包裝，HTML 回歸最乾淨的 11 個元件陣列 👇
       row.innerHTML = `
-        <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
-        <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
-        <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
-        <input type="number" class="item-price" placeholder="Price" value="${priceVal}" onclick="this.select()" title="Price">
-        <select class="item-discount" title="Discount">
-          <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
-          <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
-          <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
-          <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
-        </select>
-        <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" onclick="this.select()" title="Qty">
-        
-        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
-        <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
-        <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" onclick="this.select()" title="換購折抵金額 (選填)">
-        
-        <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
-          <span class="drop-text">+ Img</span>
-          <div class="drop-loading">Up...</div>
-          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+        <div class="mobile-row-1">
+            <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
+            <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
         </div>
-        <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
+        
+        <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
+        
+        <div class="mobile-row-3">
+            <input type="number" class="item-price" placeholder="Price" value="${priceVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Price">
+            <select class="item-discount" title="Discount">
+              <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
+              <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
+              <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
+              <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
+            </select>
+            <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Qty">
+        </div>
+        
+        <div class="mobile-row-4">
+            <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
+            <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+        </div>
+        
+        <div class="mobile-row-5">
+            <div style="flex:1;"></div>
+            <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
+            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+              <span class="drop-text">+ Img</span>
+              <div class="drop-loading">Up...</div>
+              <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+            </div>
+            <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
+        </div>
       `;
       container.appendChild(row);
     }
@@ -665,6 +676,8 @@
         
         tr.addEventListener('touchstart', function(e) {
             if(e.touches.length > 1) return;
+            this.draggable = false;
+            
             touchStartY = e.touches[0].clientY;
             touchStartX = e.touches[0].clientX;
             
@@ -707,6 +720,8 @@
 
         tr.addEventListener('touchend', function(e) {
             clearTimeout(touchTimer);
+            this.draggable = true; 
+            
             if (!isDragging) return;
             
             this.classList.remove('dragging');
@@ -736,6 +751,7 @@
 
         tr.addEventListener('touchcancel', function(e) {
             clearTimeout(touchTimer);
+            this.draggable = true;
             if (!isDragging) return;
             this.classList.remove('dragging');
             const allTrs = tbody.querySelectorAll('tr');
@@ -769,7 +785,9 @@
         });
         tr.addEventListener('drop', function(e) {
             e.stopPropagation();
-            if (dragSrcEl !== this) {
+            e.preventDefault(); 
+            
+            if (dragSrcEl !== this && dragSrcEl) {
                 const bounding = this.getBoundingClientRect();
                 const offset = bounding.y + (bounding.height / 2);
                 if (e.clientY - offset > 0) {
