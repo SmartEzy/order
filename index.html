@@ -47,10 +47,10 @@
     input.trade-input::placeholder { color: #b39b56; }
     
     .drop-zone {
-      width: 60px; height: 60px; border: 1px dashed #bbb; border-radius: 4px;
+      width: 60px; height: 36px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
       background-color: #f8f9fa; background-size: cover; background-position: center;
-      position: relative; overflow: hidden; transition: 0.2s; margin-top: -2px;
+      position: relative; overflow: hidden; transition: 0.2s; margin-top: 0;
     }
     .drop-zone.dragover { border-color: #5f6368; background-color: #e8eaed; }
     .drop-text { font-size: 11px; color: #777; text-align: center; pointer-events: none; }
@@ -77,6 +77,11 @@
     table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
+    
+    /* 👇 拖曳時的視覺效果 👇 */
+    #historyTbody tr { transition: background-color 0.2s; }
+    #historyTbody tr:hover { background-color: #f8f9fa; }
+    #historyTbody tr.dragging { opacity: 0.6; background-color: #e8eaed; }
     
     input.row-check, input#selectAll {
         width: 16px;
@@ -198,6 +203,7 @@
 
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
+    let dragSrcEl = null; // 記錄目前拖曳的元素
 
     function formatNumber(num) {
         if (num === null || num === undefined) return '0';
@@ -487,6 +493,64 @@
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
+        
+        // 👇 讓 <tr> 支援拖曳排序功能 👇
+        tr.draggable = true;
+        tr.style.cursor = 'grab';
+        
+        tr.addEventListener('dragstart', function(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            this.classList.add('dragging');
+        });
+        
+        tr.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const bounding = this.getBoundingClientRect();
+            const offset = bounding.y + (bounding.height / 2);
+            // 判斷滑鼠在目標元素的上半部還是下半部，顯示對應的插入線條
+            if (e.clientY - offset > 0) {
+                this.style['border-bottom'] = '2px dashed #5f6368';
+                this.style['border-top'] = '';
+            } else {
+                this.style['border-top'] = '2px dashed #5f6368';
+                this.style['border-bottom'] = '';
+            }
+            return false;
+        });
+        
+        tr.addEventListener('dragleave', function(e) {
+            this.style['border-top'] = '';
+            this.style['border-bottom'] = '1px solid #eee';
+        });
+        
+        tr.addEventListener('drop', function(e) {
+            e.stopPropagation();
+            if (dragSrcEl !== this) {
+                const bounding = this.getBoundingClientRect();
+                const offset = bounding.y + (bounding.height / 2);
+                if (e.clientY - offset > 0) {
+                    this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(dragSrcEl, this);
+                }
+            }
+            this.style['border-top'] = '';
+            this.style['border-bottom'] = '1px solid #eee';
+            return false;
+        });
+        
+        tr.addEventListener('dragend', function(e) {
+            this.classList.remove('dragging');
+            const rows = document.querySelectorAll('#historyTbody tr');
+            rows.forEach(row => {
+                row.style['border-top'] = '';
+                row.style['border-bottom'] = '1px solid #eee';
+            });
+        });
+        // 👆 拖曳功能綁定結束 👆
+
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Image</a>` : '-';
         const displayDate = item.Date ? item.Date.toString().split('T')[0] : '';
@@ -524,6 +588,7 @@
     }
 
     function generateSelectedPreview() {
+      // 這裡 querySelectorAll 會按照拖曳後的新 DOM 順序來取值，因此報表順序會跟隨拖曳結果！
       const selectedChecks = document.querySelectorAll('.row-check:checked');
       if(selectedChecks.length === 0) { alert('請先勾選項目 (Select items first)'); return; }
 
@@ -555,6 +620,7 @@
       let grandTotal = 0; let grandSaved = 0;
       let urlsToFetch = new Set(); 
 
+      // 報表的日期與名稱，以列表上第一個被打勾的項目為主
       const firstIdx = selectedChecks[0].value;
       const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
       
@@ -609,16 +675,13 @@
             reportTbody.appendChild(tr);
             
             const trTrade = document.createElement('tr');
-            // 👇 補回這裡的 ↳ 折角箭頭 👇
+            // 保留了 Trade-in 前面的 ↳ 箭頭，並與下方的 ↳ 箭頭統一對齊與字體樣式
             const tradeItemDisplay = `↳ Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
             
             trTrade.innerHTML = `
-              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
               <td style="padding: 0px 4px 4px 14px; color: #e67e22; font-size: 13px; font-weight: 400;">${tradeItemDisplay}</td>
               <td style="padding: 0px 4px 4px 4px;"></td>
-              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
               <td style="padding: 0px 12px 4px 4px; text-align: right; font-size: 13px; font-weight: 400; color: #e67e22;">↳</td>
-              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
               <td style="padding: 0px 4px 4px 0; text-align: right; font-weight: 400; font-size: 13px; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
             `;
             reportTbody.appendChild(trTrade);
