@@ -613,16 +613,17 @@
             const tradeItemDisplay = `↳ Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
             
             trTrade.innerHTML = `
-              <!-- 👇 縮小了 padding-bottom 為 4px，讓距離更近 👇 -->
-              <td style="padding: 0px 4px 4px 14px; color: #e67e22; font-size: 12px;">${tradeItemDisplay}</td>
+              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
+              <td style="padding: 0px 4px 4px 14px; color: #e67e22; font-size: 13px; font-weight: 400;">${tradeItemDisplay}</td>
               <td style="padding: 0px 4px 4px 4px;"></td>
-              <td style="padding: 0px 12px 4px 4px; text-align: right; font-size: 14px; color: #e67e22;">↳</td>
-              <td style="padding: 0px 4px 4px 0; text-align: right; font-weight: 600; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
+              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
+              <td style="padding: 0px 12px 4px 4px; text-align: right; font-size: 13px; font-weight: 400; color: #e67e22;">↳</td>
+              <!-- 👇 統一字體大小為 13px，並設定正常粗細 (font-weight: 400) 👇 -->
+              <td style="padding: 0px 4px 4px 0; text-align: right; font-weight: 400; font-size: 13px; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
             `;
             reportTbody.appendChild(trTrade);
             
             const trSub = document.createElement('tr');
-            // 👇 縮小了 padding-top 為 4px，讓淨值金額更靠近上方 👇
             trSub.innerHTML = `
                 <td colspan="3" style="padding: 0px;"></td>
                 <td style="padding: 6px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50;">$${itemTotalStr}</td>
