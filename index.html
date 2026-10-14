@@ -20,14 +20,15 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
+    /* 👇 微調 Grid 寬度，多給 35px 空間放「編輯」按鈕 👇 */
     .item-row {
       display: grid;
-      grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 35px 60px;
+      grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
     @media (max-width: 1024px) {
       .item-row {
-        grid-template-columns: 1fr 1fr 1fr 60px;
+        grid-template-columns: 1fr 1fr 1fr 60px 35px;
         background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
         gap: 10px;
       }
@@ -36,6 +37,7 @@
       .item-price, .item-discount, .item-qty { grid-column: span 1; }
       .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
       .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
+      .btn-icon { grid-row: span 3; grid-column: 5; align-self: center; }
     }
     
     input, select {
@@ -50,22 +52,32 @@
       width: 60px; height: 36px; border: 1px dashed #bbb; border-radius: 4px;
       display: flex; justify-content: center; align-items: center; cursor: pointer;
       background-color: #f8f9fa; background-size: cover; background-position: center;
-      position: relative; overflow: hidden; transition: 0.2s; margin-top: 0;
+      position: relative; overflow: visible; transition: 0.2s; margin-top: 0;
     }
     .drop-zone.dragover { border-color: #5f6368; background-color: #e8eaed; }
     .drop-text { font-size: 11px; color: #777; text-align: center; pointer-events: none; }
+    
+    .drop-zone.has-image { border: 2px solid #34a853; }
     .drop-zone.has-image .drop-text { display: none; } 
+    .drop-zone.has-image::after {
+      content: '✔'; position: absolute; top: -6px; right: -6px;
+      background: #34a853; color: white; font-size: 10px; font-weight: bold;
+      width: 14px; height: 14px; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
     .drop-loading {
       position: absolute; top:0; left:0; width:100%; height:100%;
       background: rgba(255,255,255,0.85); display: none;
-      justify-content: center; align-items: center; font-size: 10px; color: #5f6368;
+      justify-content: center; align-items: center; font-size: 10px; color: #5f6368; border-radius: 4px;
     }
 
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
     .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; margin-top: 4px; }
-    .btn-icon:hover { fill: #d93025; }
+    .btn-icon:hover { fill: #5f6368; } /* 預設 hover 深灰色 */
+    .btn-icon.delete:hover { fill: #d93025; } /* 垃圾桶 hover 紅色 */
 
     .btn-save.saving { background-color: #9aa0a6; cursor: not-allowed; }
     .btn-save.saved { background-color: #1e8e3e; }
@@ -78,16 +90,11 @@
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
     
-    /* 👇 拖曳時的視覺效果 👇 */
     #historyTbody tr { transition: background-color 0.2s; }
     #historyTbody tr:hover { background-color: #f8f9fa; }
     #historyTbody tr.dragging { opacity: 0.6; background-color: #e8eaed; }
     
-    input.row-check, input#selectAll {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-    }
+    input.row-check, input#selectAll { width: 16px; height: 16px; cursor: pointer; }
 
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -142,11 +149,12 @@
             <th>Date</th><th>Name</th><th>Item</th><th>Price</th><th>Disc</th>
             <th>Trade-In Info</th><th>Trade-In Val</th>
             <th>Final Total</th><th>Image</th>
-            <th style="width: 30px; text-align: center;"></th>
+            <!-- 👇 表頭多加一個 30px 給編輯按鈕 👇 -->
+            <th style="width: 60px; text-align: center;">Actions</th>
           </tr>
         </thead>
         <tbody id="historyTbody">
-          <tr><td colspan="11" style="text-align:center; color: #999;">Loading...</td></tr>
+          <tr><td colspan="12" style="text-align:center; color: #999;">Loading...</td></tr>
         </tbody>
       </table>
     </div>
@@ -203,14 +211,18 @@
 
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
-    let dragSrcEl = null; // 記錄目前拖曳的元素
+    let dragSrcEl = null;
 
     function formatNumber(num) {
         if (num === null || num === undefined) return '0';
         return Number(num).toLocaleString('en-US');
     }
 
-    const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+    // 👇 桶身有直線的垃圾桶 SVG 👇
+    const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 4V3H9v1H4v2h1v13c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6h1V4h-5zm2 15H7V6h10v13z"/><path d="M9 8h2v9H9zm4 0h2v9h-2z"/></svg>`;
+    
+    // 👇 新增的鉛筆 (編輯) SVG 👇
+    const editIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
     window.onload = function() {
       addItemRow();
@@ -223,45 +235,74 @@
         overlay.style.display = show ? 'flex' : 'none'; 
     }
 
-    function addItemRow() {
+    // 將加入新列的功能包裝好，如果傳入 item 資料，就會自動填上 (載入功能)
+    function addItemRow(itemData = null) {
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
       
       let lastDate = new Date().toISOString().split('T')[0];
       let lastName = '';
-      if (rows.length > 0) {
+      if (rows.length > 0 && !itemData) {
         lastDate = rows[rows.length - 1].querySelector('.item-date').value;
         lastName = rows[rows.length - 1].querySelector('.item-name').value;
       }
 
       const row = document.createElement('div');
       row.className = 'item-row';
-      row.dataset.imageId = "";
-      row.dataset.imageUrl = "";
+      row.dataset.imageId = itemData ? (itemData['Image ID'] || "") : "";
+      row.dataset.imageUrl = itemData ? (itemData['Image URL'] || "") : "";
       
+      // 如果有 itemData 傳入，將資料預先填入變數中
+      const dateVal = itemData ? (itemData.Date ? itemData.Date.toString().split('T')[0] : '') : lastDate;
+      const nameVal = itemData ? (itemData.Name || '') : lastName;
+      // 處理 Item Name 可能包含 (x2) 的狀況：載入時先濾掉 (x 數量) 方便重新編輯
+      let itemClean = itemData ? (itemData.Item || '') : '';
+      let qtyVal = 1;
+      if (itemClean) {
+          const match = itemClean.match(/ \(x(\d+)\)$/);
+          if (match) {
+              qtyVal = parseInt(match[1]);
+              itemClean = itemClean.replace(/ \(x\d+\)$/, '');
+          }
+      }
+      const priceVal = itemData ? (itemData.Price || '') : '';
+      const discVal = itemData ? (itemData.Discount || '85%') : '85%';
+      
+      const tsVal = itemData ? (itemData['Trade-In Serial'] || '') : '';
+      const tnVal = itemData ? (itemData['Trade-In Name'] || '') : '';
+      const taVal = itemData ? (itemData['Trade-In Amount'] || '') : '';
+      
+      // 如果這筆資料原本有圖片 URL，讓背景預先載入圖片
+      let bgStyle = "";
+      let hasImageClass = "";
+      if (itemData && itemData['Image URL']) {
+          bgStyle = `style="background-image: url('${itemData['Image URL']}');"`;
+          hasImageClass = "has-image";
+      }
+
       row.innerHTML = `
-        <input type="date" class="item-date" value="${lastDate}" onclick="this.select()" title="Date">
-        <input type="text" class="item-name" placeholder="Name" value="${lastName}" onclick="this.select()" title="Name">
-        <input type="text" class="item-item" placeholder="Item" onclick="this.select()" title="Item">
-        <input type="number" class="item-price" placeholder="Price" onclick="this.select()" title="Price">
+        <input type="date" class="item-date" value="${dateVal}" onclick="this.select()" title="Date">
+        <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
+        <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
+        <input type="number" class="item-price" placeholder="Price" value="${priceVal}" onclick="this.select()" title="Price">
         <select class="item-discount" title="Discount">
-          <option value="75%">75%</option>
-          <option value="85%" selected>85%</option>
-          <option value="90%">90%</option>
-          <option value="無">無</option>
+          <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
+          <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
+          <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
+          <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
         </select>
-        <input type="number" class="item-qty" placeholder="Qty" value="1" inputmode="numeric" onclick="this.select()" title="Qty">
+        <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" onclick="this.select()" title="Qty">
         
-        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" onclick="this.select()" title="換購序號 (選填)">
-        <input type="text" class="trade-input trade-in-name" placeholder="Item" onclick="this.select()" title="換購品名 (選填)">
-        <input type="number" class="trade-input trade-in-amount" placeholder="$" onclick="this.select()" title="換購折抵金額 (選填)">
+        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
+        <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+        <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" onclick="this.select()" title="換購折抵金額 (選填)">
         
-        <button class="btn-icon" onclick="removeRow(this)" title="Remove item">${trashIcon}</button>
-        <div class="drop-zone" onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)">
-          <span class="drop-text">+ Image</span>
+        <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+          <span class="drop-text">+ Img</span>
           <div class="drop-loading">Up...</div>
           <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
         </div>
+        <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
       `;
       container.appendChild(row);
     }
@@ -269,7 +310,38 @@
     function removeRow(btn) {
       if (document.getElementsByClassName('item-row').length > 1) {
         btn.parentElement.remove();
-      } else { alert('至少需保留一項 (Keep at least one item)'); }
+      } else { 
+        // 若只剩一行，則清空內容但不刪除
+        const row = btn.parentElement;
+        row.querySelector('.item-item').value = "";
+        row.querySelector('.item-price').value = "";
+        row.querySelector('.trade-in-serial').value = "";
+        row.querySelector('.trade-in-name').value = "";
+        row.querySelector('.trade-in-amount').value = "";
+        row.dataset.imageId = "";
+        row.dataset.imageUrl = "";
+        const dropZone = row.querySelector('.drop-zone');
+        dropZone.style.backgroundImage = 'none';
+        dropZone.classList.remove('has-image');
+      }
+    }
+
+    // 👇 載入資料到上方輸入框的 Function 👇
+    function loadOrderToEdit(index) {
+        const item = allOrdersData[index];
+        if (!item) return;
+        
+        // 詢問使用者是否確定載入
+        if(!confirm('載入此筆資料會清空目前輸入區未儲存的內容，並自動將這筆紀錄帶回上方。\n\n您可以在修改完畢後按 SAVE，再手動把舊紀錄刪除。確定要載入嗎？')) return;
+        
+        // 清空輸入區
+        document.getElementById('itemsContainer').innerHTML = '';
+        
+        // 將該筆資料傳入 addItemRow 以建立已填好內容的列
+        addItemRow(item);
+        
+        // 將畫面捲動回最上方，方便修改
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function handleDrop(event, dropZone) {
@@ -295,7 +367,7 @@
       
       reader.onload = function(e) {
         dropZone.style.backgroundImage = `url(${e.target.result})`;
-        dropZone.classList.add('has-image');
+        dropZone.classList.add('has-image'); 
 
         fetch(GAS_WEB_APP_URL, {
           method: 'POST',
@@ -433,7 +505,7 @@
       .catch(err => { 
         document.getElementById('historyTbody').innerHTML = `
           <tr>
-            <td colspan="11" style="text-align:center; padding: 25px;">
+            <td colspan="12" style="text-align:center; padding: 25px;">
               <div style="color: #d9534f; font-weight: bold; font-size: 16px; margin-bottom: 5px;">讀取失敗 (Failed to load)</div>
               <div style="color: #777; font-size: 13px;">錯誤原因：${err.message}</div>
             </td>
@@ -489,12 +561,11 @@
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
       if(allOrdersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; color: #999;">No records found</td></tr>`; return;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: #999;">No records found</td></tr>`; return;
       }
       allOrdersData.forEach((item, index) => {
         const tr = document.createElement('tr');
         
-        // 👇 讓 <tr> 支援拖曳排序功能 👇
         tr.draggable = true;
         tr.style.cursor = 'grab';
         
@@ -509,7 +580,6 @@
             e.dataTransfer.dropEffect = 'move';
             const bounding = this.getBoundingClientRect();
             const offset = bounding.y + (bounding.height / 2);
-            // 判斷滑鼠在目標元素的上半部還是下半部，顯示對應的插入線條
             if (e.clientY - offset > 0) {
                 this.style['border-bottom'] = '2px dashed #5f6368';
                 this.style['border-top'] = '';
@@ -549,7 +619,6 @@
                 row.style['border-bottom'] = '1px solid #eee';
             });
         });
-        // 👆 拖曳功能綁定結束 👆
 
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Image</a>` : '-';
@@ -570,13 +639,17 @@
         
         const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
 
+        // 👇 歷史表格最後一欄 Actions 加入兩個按鈕：載入編輯 與 刪除 👇
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${index}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
           <td>$${priceStr}</td><td>${displayDiscount}</td>
           <td style="color:#8a6d3b;">${tradeInInfo}</td><td style="color:#d9534f;">${tradeInAmountStr}</td>
           <td style="font-weight: 600; color:#2c3e50;">$${totalStr}</td><td>${imgHtml}</td>
-          <td style="text-align: center;"><button class="btn-icon" onclick="deleteOrder(${item.sheetRowIndex})" title="Delete">${trashIcon}</button></td>
+          <td style="text-align: center; white-space: nowrap;">
+            <button class="btn-icon" onclick="loadOrderToEdit(${index})" title="載入至輸入區進行修改">${editIcon}</button>
+            <button class="btn-icon delete" onclick="deleteOrder(${item.sheetRowIndex})" title="直接刪除此紀錄">${trashIcon}</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -588,7 +661,6 @@
     }
 
     function generateSelectedPreview() {
-      // 這裡 querySelectorAll 會按照拖曳後的新 DOM 順序來取值，因此報表順序會跟隨拖曳結果！
       const selectedChecks = document.querySelectorAll('.row-check:checked');
       if(selectedChecks.length === 0) { alert('請先勾選項目 (Select items first)'); return; }
 
@@ -620,7 +692,6 @@
       let grandTotal = 0; let grandSaved = 0;
       let urlsToFetch = new Set(); 
 
-      // 報表的日期與名稱，以列表上第一個被打勾的項目為主
       const firstIdx = selectedChecks[0].value;
       const reportDateRaw = allOrdersData[firstIdx].Date ? allOrdersData[firstIdx].Date.toString().split('T')[0] : '';
       
@@ -675,7 +746,6 @@
             reportTbody.appendChild(tr);
             
             const trTrade = document.createElement('tr');
-            // 保留了 Trade-in 前面的 ↳ 箭頭，並與下方的 ↳ 箭頭統一對齊與字體樣式
             const tradeItemDisplay = `↳ Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
             
             trTrade.innerHTML = `
