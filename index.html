@@ -58,7 +58,9 @@
     .capsule.dynamic-name { background: #d2e3fc; color: #174ea6; }
     .capsule.dynamic-name:hover { background: #aecbfa; }
     .capsule.dynamic-name.active { background: #1a73e8; color: #fff; }
-    #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; }
+    
+    /* 👇 更改後的提示文字樣式 👇 */
+    #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; font-weight: 500; }
 
     /* =========================================
        1. 電腦版 Grid (純淨的一行 11 格流)
@@ -226,7 +228,8 @@
           <button class="capsule" onclick="setFilterCapsule('thisYear', null, this)">今年</button>
           <button class="capsule" onclick="setFilterCapsule('lastYear', null, this)">去年</button>
         </div>
-        <div id="dragWarning">⚠️ 篩選模式下已自動停用「拖曳排序功能」，切換回「全部」即可恢復。</div>
+        <!-- 👇 修改後的提示文字 👇 -->
+        <div id="dragWarning">拖曳排序功能停用</div>
       </div>
     </div>
 
@@ -335,6 +338,12 @@
         btnNode.classList.add('active');
         currentCapsuleFilter = type;
         currentCapsuleValue = value;
+        
+        // 👇 當點選「全部」時，自動清空搜尋框 👇
+        if (type === 'all') {
+            document.getElementById('searchInput').value = '';
+        }
+        
         applyFilters();
     }
 
