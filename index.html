@@ -13,7 +13,6 @@
   <meta name="apple-mobile-web-app-title" content="Order System">
 
   <style>
-    /* 全域重置與基礎字型 */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f7f9fa; margin: 0; padding: 30px 20px; color: #333;
@@ -46,63 +45,73 @@
     input.trade-input { background-color: #fffbf0; border-color: #fce8b2; }
     input.trade-input::placeholder { color: #b39b56; }
 
-    /* --- 電腦版 Grid --- */
+    /* =========================================
+       1. 電腦版 Grid (回歸完美的一行流) 
+       ========================================= */
     .item-row {
       display: grid;
+      /* 剛好 11 個參數，精準對應 11 個元件 */
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
     
-    /* --- 平板版 Grid --- */
+    /* =========================================
+       2. 平板版 Grid (1024px 以下) 
+       ========================================= */
     @media (max-width: 1024px) {
       .item-row {
-        grid-template-columns: 1fr 1fr 1fr 60px 35px;
+        grid-template-columns: repeat(12, 1fr);
         background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
         gap: 10px;
       }
-      .item-date, .item-name { grid-column: span 1; }
-      .item-item { grid-column: span 2; }
-      .item-price, .item-discount, .item-qty { grid-column: span 1; }
-      .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
-      .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
-      .btn-icon { grid-row: span 3; grid-column: 5; align-self: center; }
+      .item-date { grid-column: span 3; }
+      .item-name { grid-column: span 3; }
+      .item-item { grid-column: span 6; }
+      
+      .item-price { grid-column: span 3; }
+      .item-discount { grid-column: span 2; }
+      .item-qty { grid-column: span 2; }
+      .trade-in-serial { grid-column: span 5; }
+      
+      .trade-in-name { grid-column: span 4; }
+      .trade-in-amount { grid-column: span 4; }
+      .drop-zone { grid-column: 10 / span 2; justify-self: end; }
+      .btn-icon.delete { grid-column: 12 / span 1; justify-self: center; margin-top: 0; }
     }
 
-    /* --- 手機版 Grid (重新設計：確保每一格都夠大) --- */
+    /* =========================================
+       3. 手機版 Grid (768px 以下 - 緊湊優化版) 
+       ========================================= */
     @media (max-width: 768px) {
       body { padding: 12px 8px; }
       .panel { padding: 12px; margin-bottom: 15px; }
       
       .item-row {
-        display: flex;
-        flex-direction: column;
-        gap: 8px; 
-        padding: 12px;
-        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 6px; padding: 12px;
+        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
       }
       
-      /* 第一排：Date (60%) + Name (40%) */
-      .mobile-row-1 { display: flex; gap: 8px; width: 100%; }
-      .item-date { flex: 3; }
-      .item-name { flex: 2; }
+      /* 第一排：Date (大約60%) + Name (大約40%) */
+      .item-date { grid-column: span 7; }
+      .item-name { grid-column: span 5; }
       
       /* 第二排：Item (滿版) */
-      .item-item { width: 100%; }
+      .item-item { grid-column: span 12; }
       
-      /* 第三排：Price + Disc + Qty (1:1:1) */
-      .mobile-row-3 { display: flex; gap: 8px; width: 100%; }
-      .item-price, .item-discount, .item-qty { flex: 1; }
+      /* 第三排：Price + Disc + Qty */
+      .item-price { grid-column: span 5; }
+      .item-discount { grid-column: span 4; }
+      .item-qty { grid-column: span 3; }
       
-      /* 第四排：Trade SN + Trade Item */
-      .mobile-row-4 { display: flex; gap: 8px; width: 100%; }
-      .trade-in-serial { flex: 1; }
-      .trade-in-name { flex: 1.5; }
+      /* 第四排：Trade SN (短) + Trade Item (長) */
+      .trade-in-serial { grid-column: span 5; }
+      .trade-in-name { grid-column: span 7; }
       
-      /* 第五排：Trade $ + 圖片 + 垃圾桶 */
-      .mobile-row-5 { display: flex; gap: 8px; width: 100%; align-items: center; justify-content: flex-end; }
-      .trade-in-amount { width: 100px; flex-shrink: 0; }
-      .drop-zone { width: 60px; height: 36px; margin: 0; flex-shrink: 0; }
-      .btn-icon.delete { width: 36px; height: 36px; margin: 0; padding: 6px; flex-shrink: 0; }
+      /* 第五排：Trade $ + 圖片 + 垃圾桶 (對齊右下角) */
+      .trade-in-amount { grid-column: span 5; align-self: center; margin-top: 4px; }
+      .drop-zone { grid-column: 9 / span 2; justify-self: end; width: 60px; height: 36px; margin: 4px 0 0 0; }
+      .btn-icon.delete { grid-column: 11 / span 2; justify-self: center; width: 36px; height: 36px; margin: 4px 0 0 0; padding: 6px; }
     }
     
     .drop-zone {
@@ -335,41 +344,30 @@
           hasImageClass = "has-image";
       }
 
-      // 改用新的 HTML 結構，符合手機 Flex 排版
+      // 👇 拆除了多餘的 <div> 包裝，HTML 回歸最乾淨的 11 個元件陣列 👇
       row.innerHTML = `
-        <div class="mobile-row-1">
-            <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
-            <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
-        </div>
-        
+        <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
+        <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
         <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
+        <input type="number" class="item-price" placeholder="Price" value="${priceVal}" onclick="this.select()" title="Price">
+        <select class="item-discount" title="Discount">
+          <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
+          <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
+          <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
+          <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
+        </select>
+        <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" onclick="this.select()" title="Qty">
         
-        <div class="mobile-row-3">
-            <input type="number" class="item-price" placeholder="Price" value="${priceVal}" onclick="this.select()" title="Price">
-            <select class="item-discount" title="Discount">
-              <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
-              <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
-              <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
-              <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
-            </select>
-            <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" onclick="this.select()" title="Qty">
-        </div>
+        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
+        <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+        <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" onclick="this.select()" title="換購折抵金額 (選填)">
         
-        <div class="mobile-row-4">
-            <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
-            <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+        <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+          <span class="drop-text">+ Img</span>
+          <div class="drop-loading">Up...</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
         </div>
-        
-        <div class="mobile-row-5">
-            <div style="flex:1;"></div> <!-- 推擠用空間 -->
-            <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" onclick="this.select()" title="換購折抵金額 (選填)">
-            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
-              <span class="drop-text">+ Img</span>
-              <div class="drop-loading">Up...</div>
-              <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
-            </div>
-            <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
-        </div>
+        <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
       `;
       container.appendChild(row);
     }
