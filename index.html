@@ -321,10 +321,11 @@
         const item = allOrdersData[index];
         if (!item) return;
         
-        // 移除確認彈窗，直接載入
         document.getElementById('itemsContainer').innerHTML = '';
         addItemRow(item);
+        
         editingRowIndex = item.sheetRowIndex; 
+        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -453,9 +454,6 @@
           
           editingRowIndex = null; 
           
-          // ⭐ 存檔成功時，把全選方塊取消勾選
-          document.getElementById('selectAll').checked = false;
-          
           document.getElementById('itemsContainer').innerHTML = '';
           addItemRow();
           fetchOrders();
@@ -578,7 +576,7 @@
     }
 
     function renderHistoryTable() {
-      // ⭐ 每次重新渲染時，確保全選方塊是未勾選的狀態
+      // ⭐ 修復全選 Bug：每次重新渲染列表，確保全選按鈕被重置
       document.getElementById('selectAll').checked = false;
         
       const tbody = document.getElementById('historyTbody');
@@ -744,8 +742,8 @@
         const formattedDiscount = formatDiscountForDisplay(item.Discount);
         let discountHtml = '';
         if (formattedDiscount !== '-') {
-            // ⭐ 報表百分比顏色改為警示橘紅 (#d35400)
-            discountHtml = `<span style="color: #d35400;">${formattedDiscount}</span>`;
+            // ⭐ 報表百分比顏色改為更亮眼的 翡翠綠 (#27ae60) 👇
+            discountHtml = `<span style="color: #27ae60;">${formattedDiscount}</span>`;
         }
 
         const priceStr = formatNumber(item.Price);
