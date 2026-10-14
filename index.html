@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="Order System">
 
   <style>
+    /* 全域重置與基礎字型 */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #f7f9fa; margin: 0; padding: 30px 20px; color: #333;
@@ -20,6 +21,7 @@
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
+    /* --- 輸入框共用樣式 --- */
     input, select {
       -webkit-appearance: none; 
       -moz-appearance: none;
@@ -43,6 +45,7 @@
     input.trade-input { background-color: #fffbf0; border-color: #fce8b2; }
     input.trade-input::placeholder { color: #b39b56; }
 
+    /* --- 篩選器與快速膠囊樣式 --- */
     .list-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
     .list-header-top { display: flex; justify-content: space-between; align-items: center; }
     .filter-section { display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; padding: 12px 15px; border-radius: 6px; border: 1px solid #eee; }
@@ -52,17 +55,23 @@
     .capsule { background: #e8eaed; border: none; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 500; color: #5f6368; cursor: pointer; transition: 0.2s; white-space: nowrap; }
     .capsule:hover { background: #dadce0; }
     .capsule.active { background: #5f6368; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-    .capsule.dynamic-name { background: #d2e3fc; color: #174ea6; } /* 姓名標籤使用淡藍色區隔 */
+    .capsule.dynamic-name { background: #d2e3fc; color: #174ea6; }
     .capsule.dynamic-name:hover { background: #aecbfa; }
     .capsule.dynamic-name.active { background: #1a73e8; color: #fff; }
     #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; }
 
+    /* =========================================
+       1. 電腦版 Grid (純淨的一行 11 格流)
+       ========================================= */
     .item-row {
       display: grid;
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
     
+    /* =========================================
+       2. 平板版 Grid (1024px 以下)
+       ========================================= */
     @media (max-width: 1024px) {
       .item-row {
         grid-template-columns: repeat(12, 1fr);
@@ -84,6 +93,9 @@
       .btn-icon.delete { grid-column: 12 / span 1; justify-self: center; margin-top: 0; }
     }
 
+    /* =========================================
+       3. 手機版 Grid (768px 以下緊湊優化版)
+       ========================================= */
     @media (max-width: 768px) {
       body { padding: 12px 8px; }
       .panel { padding: 12px; margin-bottom: 15px; }
@@ -94,17 +106,19 @@
         background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
       }
       
+      /* 第一排 */
       .item-date { grid-column: span 7; }
       .item-name { grid-column: span 5; }
+      /* 第二排 */
       .item-item { grid-column: span 12; }
-      
+      /* 第三排 */
       .item-price { grid-column: span 5; }
       .item-discount { grid-column: span 4; }
       .item-qty { grid-column: span 3; }
-      
+      /* 第四排 */
       .trade-in-serial { grid-column: span 5; }
       .trade-in-name { grid-column: span 7; }
-      
+      /* 第五排 */
       .trade-in-amount { grid-column: span 5; align-self: center; margin-top: 4px; }
       .drop-zone { grid-column: 9 / span 2; justify-self: end; width: 60px; height: 36px; margin: 4px 0 0 0; }
       .btn-icon.delete { grid-column: 11 / span 2; justify-self: center; width: 36px; height: 36px; margin: 4px 0 0 0; padding: 6px; }
@@ -211,7 +225,6 @@
           <button class="capsule active" onclick="setFilterCapsule('all', null, this)">全部</button>
           <button class="capsule" onclick="setFilterCapsule('thisYear', null, this)">今年</button>
           <button class="capsule" onclick="setFilterCapsule('lastYear', null, this)">去年</button>
-          <!-- 動態生成的客戶姓名膠囊會插入在這裡 -->
         </div>
         <div id="dragWarning">⚠️ 篩選模式下已自動停用「拖曳排序功能」，切換回「全部」即可恢復。</div>
       </div>
@@ -325,14 +338,11 @@
         applyFilters();
     }
 
-    // ⭐ 動態產生姓名膠囊
     function updateNameCapsules() {
         const container = document.getElementById('filterCapsules');
-        // 移除現有的動態標籤，避免重複
         const existingDynamic = container.querySelectorAll('.dynamic-name');
         existingDynamic.forEach(el => el.remove());
 
-        // 提取不重複的客戶姓名 (排除空白)
         const uniqueNames = [...new Set(allOrdersData.map(item => item.Name ? item.Name.toString().trim() : '').filter(name => name !== ''))];
 
         uniqueNames.forEach(name => {
@@ -341,7 +351,6 @@
             btn.innerText = name;
             btn.onclick = function() { setFilterCapsule('name', name, this); };
             
-            // 如果原本就是在篩選這個名字，維持 active 狀態
             if (currentCapsuleFilter === 'name' && currentCapsuleValue === name) {
                 btn.classList.add('active');
             }
@@ -356,7 +365,6 @@
         const lastYearStr = (now.getFullYear() - 1).toString();
 
         const filteredData = allOrdersData.filter(item => {
-            // 1. 搜尋字串比對
             let matchSearch = true;
             if (searchText !== '') {
                 const name = (item.Name || '').toString().toLowerCase();
@@ -365,7 +373,6 @@
                 matchSearch = name.includes(searchText) || itemName.includes(searchText) || dateStr.includes(searchText);
             }
 
-            // 2. 膠囊過濾
             let matchCapsule = true;
             if (currentCapsuleFilter === 'thisYear') {
                 if (!item.Date) matchCapsule = false;
@@ -656,8 +663,8 @@
       .then(res => {
         if (res.success) { 
             allOrdersData = res.data; 
-            updateNameCapsules(); // 讀取資料後，更新動態姓名膠囊
-            applyFilters();       // 執行篩選渲染
+            updateNameCapsules(); 
+            applyFilters();       
         } else { 
             throw new Error(res.error || "未知錯誤"); 
         }
@@ -940,6 +947,11 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function toggleSelectAll(source) {
+      checkboxes = document.querySelectorAll('.row-check');
+      for (var i = 0, n = checkboxes.length; i < n; i++) checkboxes[i].checked = source.checked;
     }
 
     function generateSelectedPreview() {
