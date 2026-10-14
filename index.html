@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Order System</title>
   
   <link rel="icon" type="image/png" href="logo.png">
@@ -15,16 +15,19 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f7f9fa; margin: 0; padding: 30px 20px; color: #333;
+      background-color: #f7f9fa; margin: 0; padding: 20px; color: #333;
       max-width: 1200px; margin-left: auto; margin-right: auto;
     }
     .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 25px; }
 
+    /* --- 電腦版 Grid --- */
     .item-row {
       display: grid;
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
+    
+    /* --- 平板版 Grid --- */
     @media (max-width: 1024px) {
       .item-row {
         grid-template-columns: 1fr 1fr 1fr 60px 35px;
@@ -37,6 +40,30 @@
       .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
       .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
       .btn-icon { grid-row: span 3; grid-column: 5; align-self: center; }
+    }
+
+    /* --- 手機版 Grid (Mobile Friendly) --- */
+    @media (max-width: 768px) {
+      body { padding: 15px 10px; }
+      .panel { padding: 15px; }
+      .item-row {
+        grid-template-columns: 1fr 1fr 1fr; /* 切成三欄 */
+        gap: 8px; padding: 12px;
+      }
+      /* 第一排：日期、名字 */
+      .item-date { grid-column: span 2; }
+      .item-name { grid-column: span 1; }
+      /* 第二排：品項 (滿版) */
+      .item-item { grid-column: span 3; }
+      /* 第三排：價格、折數、數量 */
+      .item-price, .item-discount, .item-qty { grid-column: span 1; }
+      /* 第四排：Trade-in 資訊 */
+      .trade-in-serial { grid-column: span 3; }
+      .trade-in-name { grid-column: span 2; }
+      .trade-in-amount { grid-column: span 1; }
+      /* 第五排：圖片、垃圾桶 (放在右下角) */
+      .drop-zone { grid-column: span 2; justify-self: end; height: 40px; width: 100%; margin-top: 5px; }
+      .btn-icon { grid-column: span 1; justify-self: center; margin-top: 5px; width: 40px; height: 40px; }
     }
     
     input, select {
@@ -84,8 +111,9 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
-    .history-table-wrapper { overflow-x: auto; }
-    table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    /* 手機版讓表格可以左右滑動 */
+    .history-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
     
@@ -93,7 +121,7 @@
     #historyTbody tr:hover { background-color: #f8f9fa; }
     #historyTbody tr.dragging { opacity: 0.6; background-color: #e8eaed; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     
-    input.row-check, input#selectAll { width: 16px; height: 16px; cursor: pointer; }
+    input.row-check, input#selectAll { width: 18px; height: 18px; cursor: pointer; }
 
     #loadingOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -323,9 +351,7 @@
         
         document.getElementById('itemsContainer').innerHTML = '';
         addItemRow(item);
-        
         editingRowIndex = item.sheetRowIndex; 
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -453,6 +479,7 @@
           btnSave.innerText = 'Saved! ✔';
           
           editingRowIndex = null; 
+          document.getElementById('selectAll').checked = false;
           
           document.getElementById('itemsContainer').innerHTML = '';
           addItemRow();
@@ -576,7 +603,6 @@
     }
 
     function renderHistoryTable() {
-      // ⭐ 修復全選 Bug：每次重新渲染列表，確保全選按鈕被重置
       document.getElementById('selectAll').checked = false;
         
       const tbody = document.getElementById('historyTbody');
@@ -592,6 +618,70 @@
         tr.draggable = true;
         tr.style.cursor = 'grab';
         
+        // ⭐ 新增：讓手機版也能拖曳排序 (Touch Events)
+        let touchStartY = 0;
+        
+        tr.addEventListener('touchstart', function(e) {
+            dragSrcEl = this;
+            this.classList.add('dragging');
+            touchStartY = e.touches[0].clientY;
+            e.stopPropagation();
+        }, {passive: true});
+
+        tr.addEventListener('touchmove', function(e) {
+            if (!dragSrcEl) return;
+            e.preventDefault(); // 防止畫面捲動
+            const touchY = e.touches[0].clientY;
+            
+            // 找出滑動到哪一個元素上方
+            const elementUnderTouch = document.elementFromPoint(e.touches[0].clientX, touchY);
+            if (!elementUnderTouch) return;
+            
+            const targetTr = elementUnderTouch.closest('tr');
+            if (targetTr && targetTr !== dragSrcEl && targetTr.parentNode === tbody) {
+                const bounding = targetTr.getBoundingClientRect();
+                const offset = bounding.y + (bounding.height / 2);
+                
+                // 視覺提示
+                const allTrs = tbody.querySelectorAll('tr');
+                allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+                
+                if (touchY - offset > 0) {
+                    targetTr.style['border-bottom'] = '2px dashed #5f6368';
+                } else {
+                    targetTr.style['border-top'] = '2px dashed #5f6368';
+                }
+            }
+        }, {passive: false});
+
+        tr.addEventListener('touchend', function(e) {
+            if (!dragSrcEl) return;
+            this.classList.remove('dragging');
+            
+            const changedTouch = e.changedTouches[0];
+            const elementUnderTouch = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            
+            if (elementUnderTouch) {
+                const targetTr = elementUnderTouch.closest('tr');
+                if (targetTr && targetTr !== dragSrcEl && targetTr.parentNode === tbody) {
+                    const bounding = targetTr.getBoundingClientRect();
+                    const offset = bounding.y + (bounding.height / 2);
+                    if (changedTouch.clientY - offset > 0) {
+                        tbody.insertBefore(dragSrcEl, targetTr.nextSibling);
+                    } else {
+                        tbody.insertBefore(dragSrcEl, targetTr);
+                    }
+                    saveSequenceToBackend(); // 存檔
+                }
+            }
+            
+            // 復原樣式
+            const allTrs = tbody.querySelectorAll('tr');
+            allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+            dragSrcEl = null;
+        });
+        
+        // 電腦版滑鼠拖曳邏輯
         tr.addEventListener('dragstart', function(e) {
             dragSrcEl = this;
             e.dataTransfer.effectAllowed = 'move';
@@ -742,7 +832,7 @@
         const formattedDiscount = formatDiscountForDisplay(item.Discount);
         let discountHtml = '';
         if (formattedDiscount !== '-') {
-            // ⭐ 報表百分比顏色改為更亮眼的 翡翠綠 (#27ae60) 👇
+            // ⭐ 報表百分比顏色改為 翡翠綠 (#27ae60)
             discountHtml = `<span style="color: #27ae60;">${formattedDiscount}</span>`;
         }
 
@@ -781,11 +871,12 @@
             const trTrade = document.createElement('tr');
             const tradeItemDisplay = `↳ Trade-in: ${tradeInName || 'Device'} ${tradeInSerial ? `(${tradeInSerial})` : ''}`;
             
+            // ⭐ Trade-in 文字顏色改為經典次要灰 (#7f8c8d)
             trTrade.innerHTML = `
-              <td style="padding: 0px 4px 4px 14px; color: #e67e22; font-size: 13px; font-weight: 400;">${tradeItemDisplay}</td>
+              <td style="padding: 0px 4px 4px 14px; color: #7f8c8d; font-size: 13px; font-weight: 400;">${tradeItemDisplay}</td>
               <td style="padding: 0px 4px 4px 4px;"></td>
-              <td style="padding: 0px 12px 4px 4px; text-align: right; font-size: 13px; font-weight: 400; color: #e67e22;">↳</td>
-              <td style="padding: 0px 4px 4px 0; text-align: right; font-weight: 400; font-size: 13px; color: #e67e22; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
+              <td style="padding: 0px 12px 4px 4px; text-align: right; font-size: 13px; font-weight: 400; color: #7f8c8d;">↳</td>
+              <td style="padding: 0px 4px 4px 0; text-align: right; font-weight: 400; font-size: 13px; color: #7f8c8d; border-bottom: 1px solid #eee;">-$${formatNumber(tradeInAmount)}</td>
             `;
             reportTbody.appendChild(trTrade);
             
@@ -855,16 +946,33 @@
 
     function closePreview() { document.getElementById('previewModal').style.display = 'none'; }
 
+    // ⭐ 增強分享與下載功能：判斷如果瀏覽器不支援，直接啟動下載
     function shareOrDownloadImage() {
       if (!generatedCanvasDataUrl) return;
+      
       fetch(generatedCanvasDataUrl).then(res => res.blob()).then(blob => {
         const file = new File([blob], "Order_Summary.jpg", { type: "image/jpeg" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: 'Order Summary' });
+        
+        // 如果瀏覽器支援分享機制，且是在手機/平板等行動裝置上
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android/i.test(navigator.userAgent)) {
+          navigator.share({ files: [file], title: 'Order Summary' }).catch(() => {
+             // 如果使用者取消分享，或者發生意外，退回自動下載
+             triggerDownload();
+          });
         } else {
-          const a = document.createElement('a'); a.href = generatedCanvasDataUrl; a.download = 'Order_Summary.jpg'; a.click();
+          // 電腦版或不支援的瀏覽器，直接觸發下載
+          triggerDownload();
         }
       });
+      
+      function triggerDownload() {
+        const a = document.createElement('a'); 
+        a.href = generatedCanvasDataUrl; 
+        a.download = 'Order_Summary.jpg'; 
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     }
 
     const resultImg = document.getElementById('canvasResultImg');
