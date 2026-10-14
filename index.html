@@ -35,14 +35,27 @@
       height: 36px;
       line-height: 34px; 
       margin: 0;
+      transition: border-color 0.2s;
     }
-    input[type="date"] {
-        padding: 0 4px; 
-    }
-    input:focus, select:focus { border-color: #5f6368; outline: none; }
+    input[type="date"] { padding: 0 4px; }
+    input:focus, select:focus { border-color: #5f6368; outline: none; box-shadow: 0 0 0 2px rgba(95,99,104,0.1); }
     
     input.trade-input { background-color: #fffbf0; border-color: #fce8b2; }
     input.trade-input::placeholder { color: #b39b56; }
+
+    .list-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
+    .list-header-top { display: flex; justify-content: space-between; align-items: center; }
+    .filter-section { display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; padding: 12px 15px; border-radius: 6px; border: 1px solid #eee; }
+    #searchInput { border-radius: 20px; padding: 8px 15px; background: #fff; border: 1px solid #ddd; }
+    
+    .capsule-container { display: flex; gap: 8px; flex-wrap: wrap; }
+    .capsule { background: #e8eaed; border: none; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 500; color: #5f6368; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .capsule:hover { background: #dadce0; }
+    .capsule.active { background: #5f6368; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .capsule.dynamic-name { background: #d2e3fc; color: #174ea6; } /* 姓名標籤使用淡藍色區隔 */
+    .capsule.dynamic-name:hover { background: #aecbfa; }
+    .capsule.dynamic-name.active { background: #1a73e8; color: #fff; }
+    #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; }
 
     .item-row {
       display: grid;
@@ -52,16 +65,23 @@
     
     @media (max-width: 1024px) {
       .item-row {
-        grid-template-columns: 1fr 1fr 1fr 60px 35px;
+        grid-template-columns: repeat(12, 1fr);
         background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
         gap: 10px;
       }
-      .item-date, .item-name { grid-column: span 1; }
-      .item-item { grid-column: span 2; }
-      .item-price, .item-discount, .item-qty { grid-column: span 1; }
-      .trade-in-serial, .trade-in-name, .trade-in-amount { grid-column: span 1; background-color: #fff9e6; }
-      .drop-zone { grid-row: span 3; grid-column: 4; align-self: center; } 
-      .btn-icon { grid-row: span 3; grid-column: 5; align-self: center; }
+      .item-date { grid-column: span 3; }
+      .item-name { grid-column: span 3; }
+      .item-item { grid-column: span 6; }
+      
+      .item-price { grid-column: span 3; }
+      .item-discount { grid-column: span 2; }
+      .item-qty { grid-column: span 2; }
+      .trade-in-serial { grid-column: span 5; }
+      
+      .trade-in-name { grid-column: span 4; }
+      .trade-in-amount { grid-column: span 4; }
+      .drop-zone { grid-column: 10 / span 2; justify-self: end; }
+      .btn-icon.delete { grid-column: 12 / span 1; justify-self: center; margin-top: 0; }
     }
 
     @media (max-width: 768px) {
@@ -69,30 +89,25 @@
       .panel { padding: 12px; margin-bottom: 15px; }
       
       .item-row {
-        display: flex;
-        flex-direction: column;
-        gap: 8px; 
-        padding: 12px;
-        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 6px; padding: 12px;
+        background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
       }
       
-      .mobile-row-1 { display: flex; gap: 8px; width: 100%; }
-      .item-date { flex: 3; }
-      .item-name { flex: 2; }
+      .item-date { grid-column: span 7; }
+      .item-name { grid-column: span 5; }
+      .item-item { grid-column: span 12; }
       
-      .item-item { width: 100%; }
+      .item-price { grid-column: span 5; }
+      .item-discount { grid-column: span 4; }
+      .item-qty { grid-column: span 3; }
       
-      .mobile-row-3 { display: flex; gap: 8px; width: 100%; }
-      .item-price, .item-discount, .item-qty { flex: 1; }
+      .trade-in-serial { grid-column: span 5; }
+      .trade-in-name { grid-column: span 7; }
       
-      .mobile-row-4 { display: flex; gap: 8px; width: 100%; }
-      .trade-in-serial { flex: 1; }
-      .trade-in-name { flex: 1.5; }
-      
-      .mobile-row-5 { display: flex; gap: 8px; width: 100%; align-items: center; justify-content: flex-end; }
-      .trade-in-amount { width: 100px; flex-shrink: 0; }
-      .drop-zone { width: 60px; height: 36px; margin: 0; flex-shrink: 0; }
-      .btn-icon.delete { width: 36px; height: 36px; margin: 0; padding: 6px; flex-shrink: 0; }
+      .trade-in-amount { grid-column: span 5; align-self: center; margin-top: 4px; }
+      .drop-zone { grid-column: 9 / span 2; justify-self: end; width: 60px; height: 36px; margin: 4px 0 0 0; }
+      .btn-icon.delete { grid-column: 11 / span 2; justify-self: center; width: 36px; height: 36px; margin: 4px 0 0 0; padding: 6px; }
     }
     
     .drop-zone {
@@ -130,16 +145,16 @@
     .btn-save.saved { background-color: #1e8e3e; }
 
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-    .actions-bottom { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
     .history-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
     
-    #historyTbody tr { transition: background-color 0.2s; }
+    #historyTbody tr { transition: background-color 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #historyTbody tr:hover { background-color: #f8f9fa; }
     #historyTbody tr.dragging { opacity: 0.6; background-color: #e8eaed; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    #historyTbody.is-filtered tr { cursor: default !important; }
     
     input.row-check, input#selectAll { width: 18px; height: 18px; cursor: pointer; margin: 0; padding: 0; appearance: auto; }
 
@@ -185,9 +200,23 @@
   </div>
 
   <div class="panel">
-    <div class="actions-bottom">
-      <button class="btn" onclick="generateSelectedPreview()">REPORT</button>
+    <div class="list-header">
+      <div class="list-header-top">
+        <h3 style="margin: 0; font-size: 18px; color: #2c3e50;">Order List</h3>
+        <button class="btn" onclick="generateSelectedPreview()">REPORT</button>
+      </div>
+      <div class="filter-section">
+        <input type="text" id="searchInput" placeholder="🔍 搜尋姓名、品項或日期..." oninput="applyFilters()">
+        <div class="capsule-container" id="filterCapsules">
+          <button class="capsule active" onclick="setFilterCapsule('all', null, this)">全部</button>
+          <button class="capsule" onclick="setFilterCapsule('thisYear', null, this)">今年</button>
+          <button class="capsule" onclick="setFilterCapsule('lastYear', null, this)">去年</button>
+          <!-- 動態生成的客戶姓名膠囊會插入在這裡 -->
+        </div>
+        <div id="dragWarning">⚠️ 篩選模式下已自動停用「拖曳排序功能」，切換回「全部」即可恢復。</div>
+      </div>
     </div>
+
     <div class="history-table-wrapper">
       <table class="history-table">
         <thead>
@@ -257,6 +286,10 @@
 
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
+    
+    let currentCapsuleFilter = 'all';
+    let currentCapsuleValue = null;
+
     let dragSrcEl = null;
     let editingRowIndex = null; 
     
@@ -284,6 +317,76 @@
         overlay.style.display = show ? 'flex' : 'none'; 
     }
 
+    function setFilterCapsule(type, value, btnNode) {
+        document.querySelectorAll('.capsule').forEach(btn => btn.classList.remove('active'));
+        btnNode.classList.add('active');
+        currentCapsuleFilter = type;
+        currentCapsuleValue = value;
+        applyFilters();
+    }
+
+    // ⭐ 動態產生姓名膠囊
+    function updateNameCapsules() {
+        const container = document.getElementById('filterCapsules');
+        // 移除現有的動態標籤，避免重複
+        const existingDynamic = container.querySelectorAll('.dynamic-name');
+        existingDynamic.forEach(el => el.remove());
+
+        // 提取不重複的客戶姓名 (排除空白)
+        const uniqueNames = [...new Set(allOrdersData.map(item => item.Name ? item.Name.toString().trim() : '').filter(name => name !== ''))];
+
+        uniqueNames.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = 'capsule dynamic-name';
+            btn.innerText = name;
+            btn.onclick = function() { setFilterCapsule('name', name, this); };
+            
+            // 如果原本就是在篩選這個名字，維持 active 狀態
+            if (currentCapsuleFilter === 'name' && currentCapsuleValue === name) {
+                btn.classList.add('active');
+            }
+            container.appendChild(btn);
+        });
+    }
+
+    function applyFilters() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+        const now = new Date();
+        const currentYearStr = now.getFullYear().toString();
+        const lastYearStr = (now.getFullYear() - 1).toString();
+
+        const filteredData = allOrdersData.filter(item => {
+            // 1. 搜尋字串比對
+            let matchSearch = true;
+            if (searchText !== '') {
+                const name = (item.Name || '').toString().toLowerCase();
+                const itemName = (item.Item || '').toString().toLowerCase();
+                const dateStr = (item.Date || '').toString().toLowerCase();
+                matchSearch = name.includes(searchText) || itemName.includes(searchText) || dateStr.includes(searchText);
+            }
+
+            // 2. 膠囊過濾
+            let matchCapsule = true;
+            if (currentCapsuleFilter === 'thisYear') {
+                if (!item.Date) matchCapsule = false;
+                else matchCapsule = item.Date.startsWith(currentYearStr);
+            } else if (currentCapsuleFilter === 'lastYear') {
+                if (!item.Date) matchCapsule = false;
+                else matchCapsule = item.Date.startsWith(lastYearStr);
+            } else if (currentCapsuleFilter === 'name') {
+                const itemName = item.Name ? item.Name.toString().trim() : '';
+                matchCapsule = (itemName === currentCapsuleValue);
+            }
+
+            return matchSearch && matchCapsule;
+        });
+
+        const isFilteringActive = (searchText !== '' || currentCapsuleFilter !== 'all');
+        document.getElementById('dragWarning').style.display = isFilteringActive ? 'block' : 'none';
+
+        renderHistoryTable(filteredData, isFilteringActive);
+    }
+
     function addItemRow(itemData = null) {
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
@@ -303,7 +406,6 @@
       const dateVal = itemData ? (itemData.Date ? itemData.Date.toString().split('T')[0] : '') : lastDate;
       const nameVal = itemData ? (itemData.Name || '') : lastName;
       
-      // 處理品名附帶的數量 (xN)
       let itemClean = itemData ? (itemData.Item || '') : '';
       let qtyVal = 1;
       if (itemClean) {
@@ -316,7 +418,6 @@
       
       const priceVal = itemData ? (itemData.Price || '') : '';
       
-      // ⭐ 修正折扣載入 Bug：如果 Google Sheets 回傳 0.85，把它轉回 "85%"
       let discVal = '85%';
       if (itemData && itemData.Discount !== undefined) {
           let val = String(itemData.Discount);
@@ -346,39 +447,26 @@
       }
 
       row.innerHTML = `
-        <div class="mobile-row-1">
-            <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
-            <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
-        </div>
-        
+        <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
+        <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
         <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
-        
-        <div class="mobile-row-3">
-            <input type="number" class="item-price" placeholder="Price" value="${priceVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Price">
-            <select class="item-discount" title="Discount">
-              <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
-              <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
-              <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
-              <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
-            </select>
-            <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Qty">
+        <input type="number" class="item-price" placeholder="Price" value="${priceVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Price">
+        <select class="item-discount" title="Discount">
+          <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
+          <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
+          <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
+          <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
+        </select>
+        <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Qty">
+        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
+        <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+        <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
+        <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+          <span class="drop-text">+ Img</span>
+          <div class="drop-loading">Up...</div>
+          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
         </div>
-        
-        <div class="mobile-row-4">
-            <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
-            <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
-        </div>
-        
-        <div class="mobile-row-5">
-            <div style="flex:1;"></div>
-            <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
-            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
-              <span class="drop-text">+ Img</span>
-              <div class="drop-loading">Up...</div>
-              <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
-            </div>
-            <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
-        </div>
+        <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
       `;
       container.appendChild(row);
     }
@@ -401,8 +489,8 @@
       }
     }
 
-    function loadOrderToEdit(index) {
-        const item = allOrdersData[index];
+    function loadOrderToEdit(sheetRowIndex) {
+        const item = allOrdersData.find(d => d.sheetRowIndex === sheetRowIndex);
         if (!item) return;
         
         document.getElementById('itemsContainer').innerHTML = '';
@@ -568,7 +656,8 @@
       .then(res => {
         if (res.success) { 
             allOrdersData = res.data; 
-            renderHistoryTable(); 
+            updateNameCapsules(); // 讀取資料後，更新動態姓名膠囊
+            applyFilters();       // 執行篩選渲染
         } else { 
             throw new Error(res.error || "未知錯誤"); 
         }
@@ -658,157 +747,166 @@
         return discountVal;
     }
 
-    function renderHistoryTable() {
+    function renderHistoryTable(dataToRender, isFilteringActive = false) {
       document.getElementById('selectAll').checked = false;
         
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
-      if(allOrdersData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: #999;">No records found</td></tr>`; return;
+      
+      if (isFilteringActive) {
+          tbody.classList.add('is-filtered');
+      } else {
+          tbody.classList.remove('is-filtered');
+      }
+
+      if(!dataToRender || dataToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: #999; padding: 30px;">找不到符合的資料 (No records found)</td></tr>`; return;
       }
       
-      allOrdersData.forEach((item, index) => {
+      dataToRender.forEach((item) => {
         const tr = document.createElement('tr');
         tr.setAttribute('data-sheet-row-index', item.sheetRowIndex); 
         
-        tr.draggable = true;
-        tr.style.cursor = 'grab';
-        
-        tr.addEventListener('touchstart', function(e) {
-            if(e.touches.length > 1) return;
-            this.draggable = false;
+        if (!isFilteringActive) {
+            tr.draggable = true;
+            tr.style.cursor = 'grab';
             
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-            
-            touchTimer = setTimeout(() => {
-                isDragging = true;
-                dragSrcEl = this;
-                this.classList.add('dragging');
-                if (navigator.vibrate) navigator.vibrate(50);
-            }, 400); 
-        }, {passive: true});
-
-        tr.addEventListener('touchmove', function(e) {
-            if (!isDragging) {
-                if (Math.abs(e.touches[0].clientY - touchStartY) > 10 || Math.abs(e.touches[0].clientX - touchStartX) > 10) {
-                    clearTimeout(touchTimer);
-                }
-                return;
-            }
-            
-            e.preventDefault(); 
-            const touchY = e.touches[0].clientY;
-            const elementUnderTouch = document.elementFromPoint(e.touches[0].clientX, touchY);
-            if (!elementUnderTouch) return;
-            
-            const targetTr = elementUnderTouch.closest('tr');
-            if (targetTr && targetTr !== dragSrcEl && targetTr.parentNode === tbody) {
-                const bounding = targetTr.getBoundingClientRect();
-                const offset = bounding.y + (bounding.height / 2);
+            tr.addEventListener('touchstart', function(e) {
+                if(e.touches.length > 1) return;
+                this.draggable = false;
                 
-                const allTrs = tbody.querySelectorAll('tr');
-                allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+                touchStartY = e.touches[0].clientY;
+                touchStartX = e.touches[0].clientX;
                 
-                if (touchY - offset > 0) {
-                    targetTr.style['border-bottom'] = '2px dashed #5f6368';
-                } else {
-                    targetTr.style['border-top'] = '2px dashed #5f6368';
-                }
-            }
-        }, {passive: false});
+                touchTimer = setTimeout(() => {
+                    isDragging = true;
+                    dragSrcEl = this;
+                    this.classList.add('dragging');
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }, 400); 
+            }, {passive: true});
 
-        tr.addEventListener('touchend', function(e) {
-            clearTimeout(touchTimer);
-            this.draggable = true; 
-            
-            if (!isDragging) return;
-            
-            this.classList.remove('dragging');
-            
-            const changedTouch = e.changedTouches[0];
-            const elementUnderTouch = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
-            
-            if (elementUnderTouch) {
+            tr.addEventListener('touchmove', function(e) {
+                if (!isDragging) {
+                    if (Math.abs(e.touches[0].clientY - touchStartY) > 10 || Math.abs(e.touches[0].clientX - touchStartX) > 10) {
+                        clearTimeout(touchTimer);
+                    }
+                    return;
+                }
+                
+                e.preventDefault(); 
+                const touchY = e.touches[0].clientY;
+                const elementUnderTouch = document.elementFromPoint(e.touches[0].clientX, touchY);
+                if (!elementUnderTouch) return;
+                
                 const targetTr = elementUnderTouch.closest('tr');
                 if (targetTr && targetTr !== dragSrcEl && targetTr.parentNode === tbody) {
                     const bounding = targetTr.getBoundingClientRect();
                     const offset = bounding.y + (bounding.height / 2);
-                    if (changedTouch.clientY - offset > 0) {
-                        tbody.insertBefore(dragSrcEl, targetTr.nextSibling);
+                    
+                    const allTrs = tbody.querySelectorAll('tr');
+                    allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+                    
+                    if (touchY - offset > 0) {
+                        targetTr.style['border-bottom'] = '2px dashed #5f6368';
                     } else {
-                        tbody.insertBefore(dragSrcEl, targetTr);
+                        targetTr.style['border-top'] = '2px dashed #5f6368';
                     }
-                    saveSequenceToBackend();
                 }
-            }
-            
-            const allTrs = tbody.querySelectorAll('tr');
-            allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
-            dragSrcEl = null;
-            isDragging = false;
-        });
+            }, {passive: false});
 
-        tr.addEventListener('touchcancel', function(e) {
-            clearTimeout(touchTimer);
-            this.draggable = true;
-            if (!isDragging) return;
-            this.classList.remove('dragging');
-            const allTrs = tbody.querySelectorAll('tr');
-            allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
-            dragSrcEl = null;
-            isDragging = false;
-        });
-        
-        tr.addEventListener('dragstart', function(e) {
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            this.classList.add('dragging');
-        });
-        tr.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const bounding = this.getBoundingClientRect();
-            const offset = bounding.y + (bounding.height / 2);
-            if (e.clientY - offset > 0) {
-                this.style['border-bottom'] = '2px dashed #5f6368';
-                this.style['border-top'] = '';
-            } else {
-                this.style['border-top'] = '2px dashed #5f6368';
-                this.style['border-bottom'] = '';
-            }
-            return false;
-        });
-        tr.addEventListener('dragleave', function(e) {
-            this.style['border-top'] = '';
-            this.style['border-bottom'] = '1px solid #eee';
-        });
-        tr.addEventListener('drop', function(e) {
-            e.stopPropagation();
-            e.preventDefault(); 
+            tr.addEventListener('touchend', function(e) {
+                clearTimeout(touchTimer);
+                this.draggable = true; 
+                
+                if (!isDragging) return;
+                
+                this.classList.remove('dragging');
+                
+                const changedTouch = e.changedTouches[0];
+                const elementUnderTouch = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+                
+                if (elementUnderTouch) {
+                    const targetTr = elementUnderTouch.closest('tr');
+                    if (targetTr && targetTr !== dragSrcEl && targetTr.parentNode === tbody) {
+                        const bounding = targetTr.getBoundingClientRect();
+                        const offset = bounding.y + (bounding.height / 2);
+                        if (changedTouch.clientY - offset > 0) {
+                            tbody.insertBefore(dragSrcEl, targetTr.nextSibling);
+                        } else {
+                            tbody.insertBefore(dragSrcEl, targetTr);
+                        }
+                        saveSequenceToBackend();
+                    }
+                }
+                
+                const allTrs = tbody.querySelectorAll('tr');
+                allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+                dragSrcEl = null;
+                isDragging = false;
+            });
+
+            tr.addEventListener('touchcancel', function(e) {
+                clearTimeout(touchTimer);
+                this.draggable = true;
+                if (!isDragging) return;
+                this.classList.remove('dragging');
+                const allTrs = tbody.querySelectorAll('tr');
+                allTrs.forEach(t => { t.style['border-top'] = ''; t.style['border-bottom'] = '1px solid #eee'; });
+                dragSrcEl = null;
+                isDragging = false;
+            });
             
-            if (dragSrcEl !== this && dragSrcEl) {
+            tr.addEventListener('dragstart', function(e) {
+                dragSrcEl = this;
+                e.dataTransfer.effectAllowed = 'move';
+                this.classList.add('dragging');
+            });
+            tr.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
                 const bounding = this.getBoundingClientRect();
                 const offset = bounding.y + (bounding.height / 2);
                 if (e.clientY - offset > 0) {
-                    this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
+                    this.style['border-bottom'] = '2px dashed #5f6368';
+                    this.style['border-top'] = '';
                 } else {
-                    this.parentNode.insertBefore(dragSrcEl, this);
+                    this.style['border-top'] = '2px dashed #5f6368';
+                    this.style['border-bottom'] = '';
                 }
-            }
-            this.style['border-top'] = '';
-            this.style['border-bottom'] = '1px solid #eee';
-            return false;
-        });
-        tr.addEventListener('dragend', function(e) {
-            this.classList.remove('dragging');
-            const rows = document.querySelectorAll('#historyTbody tr');
-            rows.forEach(row => {
-                row.style['border-top'] = '';
-                row.style['border-bottom'] = '1px solid #eee';
+                return false;
             });
-            saveSequenceToBackend();
-        });
+            tr.addEventListener('dragleave', function(e) {
+                this.style['border-top'] = '';
+                this.style['border-bottom'] = '1px solid #eee';
+            });
+            tr.addEventListener('drop', function(e) {
+                e.stopPropagation();
+                e.preventDefault(); 
+                
+                if (dragSrcEl !== this && dragSrcEl) {
+                    const bounding = this.getBoundingClientRect();
+                    const offset = bounding.y + (bounding.height / 2);
+                    if (e.clientY - offset > 0) {
+                        this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(dragSrcEl, this);
+                    }
+                }
+                this.style['border-top'] = '';
+                this.style['border-bottom'] = '1px solid #eee';
+                return false;
+            });
+            tr.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                const rows = document.querySelectorAll('#historyTbody tr');
+                rows.forEach(row => {
+                    row.style['border-top'] = '';
+                    row.style['border-bottom'] = '1px solid #eee';
+                });
+                saveSequenceToBackend();
+            });
+        }
 
         const imageUrl = findImageUrl(item);
         const imgHtml = imageUrl ? `<a href="${imageUrl}" target="_blank" style="color: #5f6368;">Image</a>` : '-';
@@ -830,23 +928,18 @@
         const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
 
         tr.innerHTML = `
-          <td><input type="checkbox" class="row-check" value="${index}"></td>
+          <td><input type="checkbox" class="row-check" value="${item.sheetRowIndex}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
           <td>$${priceStr}</td><td>${displayDiscount}</td>
           <td style="color:#8a6d3b;">${tradeInInfo}</td><td style="color:#d9534f;">${tradeInAmountStr}</td>
           <td style="font-weight: 600; color:#2c3e50;">$${totalStr}</td><td>${imgHtml}</td>
           <td style="text-align: center; white-space: nowrap;">
-            <button class="btn-icon" onclick="loadOrderToEdit(${index})" title="載入至輸入區進行修改">${editIcon}</button>
+            <button class="btn-icon" onclick="loadOrderToEdit(${item.sheetRowIndex})" title="載入至輸入區進行修改">${editIcon}</button>
             <button class="btn-icon delete" onclick="deleteOrder(${item.sheetRowIndex})" title="直接刪除此紀錄">${trashIcon}</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
-    }
-
-    function toggleSelectAll(source) {
-      checkboxes = document.querySelectorAll('.row-check');
-      for (var i = 0, n = checkboxes.length; i < n; i++) checkboxes[i].checked = source.checked;
     }
 
     function generateSelectedPreview() {
