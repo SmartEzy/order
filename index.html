@@ -4,13 +4,14 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Order System</title>
+  <!-- ⭐ 更新了網頁與加入桌面的名稱 -->
+  <title>Apple Order</title>
   
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Order System">
+  <meta name="apple-mobile-web-app-title" content="Apple Order">
 
   <style>
     /* 全域重置與基礎字型 */
@@ -58,72 +59,73 @@
     .capsule.dynamic-name { background: #d2e3fc; color: #174ea6; }
     .capsule.dynamic-name:hover { background: #aecbfa; }
     .capsule.dynamic-name.active { background: #1a73e8; color: #fff; }
-    
-    /* 👇 更改後的提示文字樣式 👇 */
     #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; font-weight: 500; }
 
     /* =========================================
-       1. 電腦版 Grid (純淨的一行 11 格流)
+       1. 電腦版 Grid (動態展開換購設計)
        ========================================= */
+    /* 讓內層的分組 div 不影響網格佈局 */
+    .mobile-row-1, .mobile-row-2, .mobile-row-3 { display: contents; }
+    
     .item-row {
       display: grid;
-      grid-template-columns: 120px 80px 1fr 80px 70px 50px 100px 100px 80px 60px 35px;
+      /* 預設隱藏換購欄位 (9 格) */
+      grid-template-columns: 120px 80px 1fr 80px 70px 50px 90px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
-    
-    /* =========================================
-       2. 平板版 Grid (1024px 以下)
-       ========================================= */
-    @media (max-width: 1024px) {
-      .item-row {
-        grid-template-columns: repeat(12, 1fr);
-        background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px;
-        gap: 10px;
-      }
-      .item-date { grid-column: span 3; }
-      .item-name { grid-column: span 3; }
-      .item-item { grid-column: span 6; }
-      
-      .item-price { grid-column: span 3; }
-      .item-discount { grid-column: span 2; }
-      .item-qty { grid-column: span 2; }
-      .trade-in-serial { grid-column: span 5; }
-      
-      .trade-in-name { grid-column: span 4; }
-      .trade-in-amount { grid-column: span 4; }
-      .drop-zone { grid-column: 10 / span 2; justify-self: end; }
-      .btn-icon.delete { grid-column: 12 / span 1; justify-self: center; margin-top: 0; }
+    .item-row.trade-expanded {
+      /* 展開後顯示換購欄位 (11 格) */
+      grid-template-columns: 120px 80px 1fr 80px 70px 50px 80px 100px 70px 60px 35px;
     }
+    
+    /* 換購區塊顯示邏輯 */
+    .trade-in-inputs { display: none; }
+    .item-row.trade-expanded .trade-in-inputs { display: contents; }
+    .item-row.trade-expanded .btn-trade-in { display: none; }
+    
+    /* 換購按鈕樣式 */
+    .btn-trade-in {
+      height: 36px; background-color: #fffbf0; border: 1px dashed #fce8b2; color: #b39b56;
+      border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; margin: 0; padding: 0;
+    }
+    .btn-trade-in:hover { background-color: #fce8b2; color: #8a6d3b; }
 
     /* =========================================
-       3. 手機版 Grid (768px 以下緊湊優化版)
+       2. 平板與手機版 Grid (1024px 以下)
        ========================================= */
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
       body { padding: 12px 8px; }
       .panel { padding: 12px; margin-bottom: 15px; }
       
       .item-row {
-        grid-template-columns: repeat(12, 1fr);
-        gap: 6px; padding: 12px;
+        display: flex; flex-direction: column; gap: 8px; padding: 15px;
         background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
       }
       
-      /* 第一排 */
-      .item-date { grid-column: span 7; }
-      .item-name { grid-column: span 5; }
-      /* 第二排 */
-      .item-item { grid-column: span 12; }
-      /* 第三排 */
-      .item-price { grid-column: span 5; }
-      .item-discount { grid-column: span 4; }
-      .item-qty { grid-column: span 3; }
-      /* 第四排 */
-      .trade-in-serial { grid-column: span 5; }
-      .trade-in-name { grid-column: span 7; }
-      /* 第五排 */
-      .trade-in-amount { grid-column: span 5; align-self: center; margin-top: 4px; }
-      .drop-zone { grid-column: 9 / span 2; justify-self: end; width: 60px; height: 36px; margin: 4px 0 0 0; }
-      .btn-icon.delete { grid-column: 11 / span 2; justify-self: center; width: 36px; height: 36px; margin: 4px 0 0 0; padding: 6px; }
+      /* 將原本 display: contents 轉回 flex/grid 以實現多層排版 */
+      .mobile-row-1, .mobile-row-2, .mobile-row-3 { display: flex; width: 100%; gap: 8px; }
+      
+      /* 第一列：Date / Name / Item */
+      .mobile-row-1 { display: grid; grid-template-columns: 120px 80px 1fr; }
+      
+      /* 第二列：Price / Disc / Qty */
+      .mobile-row-2 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+      
+      /* 第三列：Trade-in Btn / Img / Trash */
+      .mobile-row-3 { align-items: center; justify-content: flex-end; }
+      .btn-trade-in { flex: 1; height: 36px; margin: 0; }
+      
+      /* 手機版展開換購欄位 */
+      .item-row.trade-expanded .trade-in-inputs { display: grid; grid-template-columns: 1fr 1.5fr 80px; flex: 1; gap: 8px; }
+      
+      .drop-zone { flex-shrink: 0; width: 60px; height: 36px; margin: 0; }
+      .btn-icon.delete { flex-shrink: 0; width: 36px; height: 36px; margin: 0; padding: 6px; }
+    }
+    @media (max-width: 480px) {
+      .mobile-row-1 { grid-template-columns: 115px 70px 1fr; gap: 6px; }
+      .mobile-row-2 { gap: 6px; }
+      .mobile-row-3 { gap: 6px; }
+      .item-row.trade-expanded .trade-in-inputs { gap: 6px; }
     }
     
     .drop-zone {
@@ -153,6 +155,10 @@
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
+    /* ⭐ ADD 按鈕專屬美化樣式 */
+    .btn-add { background-color: transparent; color: #5f6368; border: 2px dashed #9aa0a6; font-weight: bold; }
+    .btn-add:hover { background-color: #f1f3f4; border-color: #5f6368; color: #333; }
+
     .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; fill: #9aa0a6; transition: fill 0.2s; margin-top: 4px; }
     .btn-icon:hover { fill: #5f6368; } 
     .btn-icon.delete:hover { fill: #d93025; } 
@@ -210,7 +216,8 @@
   <div class="panel">
     <div id="itemsContainer"></div>
     <div class="actions-top">
-      <button class="btn" onclick="addItemRow()">ADD</button>
+      <!-- ⭐ ADD 按鈕換上專屬樣式，位置在左邊 -->
+      <button class="btn btn-add" onclick="addItemRow()">+ ADD</button>
       <button class="btn btn-save" id="btnSave" onclick="saveToSheets()">SAVE</button>
     </div>
   </div>
@@ -228,7 +235,6 @@
           <button class="capsule" onclick="setFilterCapsule('thisYear', null, this)">今年</button>
           <button class="capsule" onclick="setFilterCapsule('lastYear', null, this)">去年</button>
         </div>
-        <!-- 👇 修改後的提示文字 👇 -->
         <div id="dragWarning">拖曳排序功能停用</div>
       </div>
     </div>
@@ -319,6 +325,13 @@
         return Number(num).toLocaleString('en-US');
     }
 
+    // ⭐ 取得當地時區(台灣)的標準日期格式 YYYY-MM-DD
+    function getLocalDateStr() {
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        return new Date(now - offset).toISOString().split('T')[0];
+    }
+
     const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 4V3H9v1H4v2h1v13c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6h1V4h-5zm2 15H7V6h10v13z"/><path d="M9 8h2v9H9zm4 0h2v9h-2z"/></svg>`;
     const editIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
@@ -339,11 +352,9 @@
         currentCapsuleFilter = type;
         currentCapsuleValue = value;
         
-        // 👇 當點選「全部」時，自動清空搜尋框 👇
         if (type === 'all') {
             document.getElementById('searchInput').value = '';
         }
-        
         applyFilters();
     }
 
@@ -407,10 +418,11 @@
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
       
-      let lastDate = new Date().toISOString().split('T')[0];
+      // ⭐ 修正預設日期抓取邏輯
+      let lastDate = getLocalDateStr();
       let lastName = '';
       if (rows.length > 0 && !itemData) {
-        lastDate = rows[rows.length - 1].querySelector('.item-date').value;
+        lastDate = rows[rows.length - 1].querySelector('.item-date').value || getLocalDateStr();
         lastName = rows[rows.length - 1].querySelector('.item-name').value;
       }
 
@@ -462,27 +474,42 @@
           hasImageClass = "has-image";
       }
 
+      // 判斷是否需要預設展開換購區
+      let hasTradeIn = (tsVal !== '' || tnVal !== '' || taVal !== '');
+      if (hasTradeIn) {
+          row.classList.add('trade-expanded');
+      }
+
       row.innerHTML = `
-        <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
-        <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
-        <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
-        <input type="number" class="item-price" placeholder="Price" value="${priceVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Price">
-        <select class="item-discount" title="Discount">
-          <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
-          <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
-          <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
-          <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
-        </select>
-        <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Qty">
-        <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
-        <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
-        <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
-        <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
-          <span class="drop-text">+ Img</span>
-          <div class="drop-loading">Up...</div>
-          <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+        <div class="mobile-row-1">
+            <input type="date" class="item-date" value="${dateVal}" onclick="this.showPicker ? this.showPicker() : null" title="Date">
+            <input type="text" class="item-name" placeholder="Name" value="${nameVal}" onclick="this.select()" title="Name">
+            <input type="text" class="item-item" placeholder="Item" value="${itemClean}" onclick="this.select()" title="Item">
         </div>
-        <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
+        <div class="mobile-row-2">
+            <input type="number" class="item-price" placeholder="Price" value="${priceVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Price">
+            <select class="item-discount" title="Discount">
+              <option value="75%" ${discVal === '75%' ? 'selected' : ''}>75%</option>
+              <option value="85%" ${discVal === '85%' ? 'selected' : ''}>85%</option>
+              <option value="90%" ${discVal === '90%' ? 'selected' : ''}>90%</option>
+              <option value="無" ${discVal === '無' ? 'selected' : ''}>無</option>
+            </select>
+            <input type="number" class="item-qty" placeholder="Qty" value="${qtyVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="Qty">
+        </div>
+        <div class="mobile-row-3">
+            <button class="btn-trade-in" onclick="this.closest('.item-row').classList.add('trade-expanded')">+ Trade-in</button>
+            <div class="trade-in-inputs">
+                <input type="text" class="trade-input trade-in-serial" placeholder="Trade SN" value="${tsVal}" onclick="this.select()" title="換購序號 (選填)">
+                <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
+                <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
+            </div>
+            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+              <span class="drop-text">+ Img</span>
+              <div class="drop-loading">Up...</div>
+              <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
+            </div>
+            <button class="btn-icon delete" onclick="removeRow(this)" title="刪除此列">${trashIcon}</button>
+        </div>
       `;
       container.appendChild(row);
     }
@@ -499,6 +526,7 @@
         row.querySelector('.trade-in-amount').value = "";
         row.dataset.imageId = "";
         row.dataset.imageUrl = "";
+        row.classList.remove('trade-expanded');
         const dropZone = row.querySelector('.drop-zone');
         dropZone.style.backgroundImage = 'none';
         dropZone.classList.remove('has-image');
