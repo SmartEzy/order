@@ -4,7 +4,6 @@
   <base target="_top">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <!-- ⭐ 更新了網頁與加入桌面的名稱 -->
   <title>Apple Order</title>
   
   <link rel="icon" type="image/png" href="logo.png">
@@ -62,28 +61,23 @@
     #dragWarning { display: none; color: #d35400; font-size: 12px; margin-top: 2px; font-weight: 500; }
 
     /* =========================================
-       1. 電腦版 Grid (動態展開換購設計)
+       1. 電腦版 Grid
        ========================================= */
-    /* 讓內層的分組 div 不影響網格佈局 */
     .mobile-row-1, .mobile-row-2, .mobile-row-3 { display: contents; }
     
     .item-row {
       display: grid;
-      /* 預設隱藏換購欄位 (9 格) */
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 90px 60px 35px;
       gap: 6px; margin-bottom: 12px; align-items: start;
     }
     .item-row.trade-expanded {
-      /* 展開後顯示換購欄位 (11 格) */
       grid-template-columns: 120px 80px 1fr 80px 70px 50px 80px 100px 70px 60px 35px;
     }
     
-    /* 換購區塊顯示邏輯 */
     .trade-in-inputs { display: none; }
     .item-row.trade-expanded .trade-in-inputs { display: contents; }
     .item-row.trade-expanded .btn-trade-in { display: none; }
     
-    /* 換購按鈕樣式 */
     .btn-trade-in {
       height: 36px; background-color: #fffbf0; border: 1px dashed #fce8b2; color: #b39b56;
       border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; margin: 0; padding: 0;
@@ -102,20 +96,13 @@
         background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; margin-bottom: 12px;
       }
       
-      /* 將原本 display: contents 轉回 flex/grid 以實現多層排版 */
       .mobile-row-1, .mobile-row-2, .mobile-row-3 { display: flex; width: 100%; gap: 8px; }
-      
-      /* 第一列：Date / Name / Item */
       .mobile-row-1 { display: grid; grid-template-columns: 120px 80px 1fr; }
-      
-      /* 第二列：Price / Disc / Qty */
       .mobile-row-2 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
       
-      /* 第三列：Trade-in Btn / Img / Trash */
       .mobile-row-3 { align-items: center; justify-content: flex-end; }
       .btn-trade-in { flex: 1; height: 36px; margin: 0; }
       
-      /* 手機版展開換購欄位 */
       .item-row.trade-expanded .trade-in-inputs { display: grid; grid-template-columns: 1fr 1.5fr 80px; flex: 1; gap: 8px; }
       
       .drop-zone { flex-shrink: 0; width: 60px; height: 36px; margin: 0; }
@@ -155,7 +142,6 @@
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
     .btn:hover { background-color: #3c4043; }
     
-    /* ⭐ ADD 按鈕專屬美化樣式 */
     .btn-add { background-color: transparent; color: #5f6368; border: 2px dashed #9aa0a6; font-weight: bold; }
     .btn-add:hover { background-color: #f1f3f4; border-color: #5f6368; color: #333; }
 
@@ -216,7 +202,6 @@
   <div class="panel">
     <div id="itemsContainer"></div>
     <div class="actions-top">
-      <!-- ⭐ ADD 按鈕換上專屬樣式，位置在左邊 -->
       <button class="btn btn-add" onclick="addItemRow()">+ ADD</button>
       <button class="btn btn-save" id="btnSave" onclick="saveToSheets()">SAVE</button>
     </div>
@@ -325,7 +310,6 @@
         return Number(num).toLocaleString('en-US');
     }
 
-    // ⭐ 取得當地時區(台灣)的標準日期格式 YYYY-MM-DD
     function getLocalDateStr() {
         const now = new Date();
         const offset = now.getTimezoneOffset() * 60000;
@@ -418,7 +402,6 @@
       const container = document.getElementById('itemsContainer');
       const rows = container.getElementsByClassName('item-row');
       
-      // ⭐ 修正預設日期抓取邏輯
       let lastDate = getLocalDateStr();
       let lastName = '';
       if (rows.length > 0 && !itemData) {
@@ -474,7 +457,6 @@
           hasImageClass = "has-image";
       }
 
-      // 判斷是否需要預設展開換購區
       let hasTradeIn = (tsVal !== '' || tnVal !== '' || taVal !== '');
       if (hasTradeIn) {
           row.classList.add('trade-expanded');
@@ -970,11 +952,18 @@
         }
         
         const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
+        
+        // ⭐ 根據您的提醒，這裡加上數量 xN 的顯示
+        let listPriceHtml = `$${priceStr}`;
+        let qtyMatch = (item.Item || '').match(/ \(x(\d+)\)$/);
+        if (qtyMatch && parseInt(qtyMatch[1]) > 1) {
+            listPriceHtml = `$${priceStr} <span style="font-size:11px; color:#999; margin-left:2px;">x${qtyMatch[1]}</span>`;
+        }
 
         tr.innerHTML = `
           <td><input type="checkbox" class="row-check" value="${item.sheetRowIndex}"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
-          <td>$${priceStr}</td><td>${displayDiscount}</td>
+          <td>${listPriceHtml}</td><td>${displayDiscount}</td>
           <td style="color:#8a6d3b;">${tradeInInfo}</td><td style="color:#d9534f;">${tradeInAmountStr}</td>
           <td style="font-weight: 600; color:#2c3e50;">$${totalStr}</td><td>${imgHtml}</td>
           <td style="text-align: center; white-space: nowrap;">
@@ -1056,6 +1045,14 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
         
+        // ⭐ 報表也顯示數量 xN
+        let qtyMatch = (item.Item || '').match(/ \(x(\d+)\)$/);
+        let qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+        let reportPriceHtml = `$${priceStr}`;
+        if (qty > 1) {
+            reportPriceHtml = `$${priceStr}<br><span style="font-size:11px; color:#95a5a6;">x ${qty}</span>`;
+        }
+        
         const tradeInSerial = item['Trade-In Serial'] || '';
         const tradeInName = item['Trade-In Name'] || '';
         const tradeInAmount = parseFloat(item['Trade-In Amount']) || 0;
@@ -1068,7 +1065,7 @@
             tr.innerHTML = `
               <td style="padding: 12px 4px; color: #333; font-weight: 600;">${item.Item}</td>
               <td style="padding: 12px 4px; text-align: center; color: #7f8c8d;">
-                <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
+                <div style="width: 62px; margin: 0 auto; text-align: right;">${reportPriceHtml}</div>
               </td>
               <td style="padding: 12px 12px 12px 24px; text-align: right; width: 45px;">${discountHtml}</td>
               <td style="padding: 12px 4px 12px 0; text-align: right; font-weight: 600; color: #2c3e50; width: 65px;">$${itemTotalStr}</td>
@@ -1078,7 +1075,7 @@
             tr.innerHTML = `
               <td style="padding: 12px 4px 4px 4px; color: #333; font-weight: 600;">${item.Item}</td>
               <td style="padding: 12px 4px 4px 4px; text-align: center; color: #7f8c8d;">
-                <div style="width: 62px; margin: 0 auto; text-align: right;">$${priceStr}</div>
+                <div style="width: 62px; margin: 0 auto; text-align: right;">${reportPriceHtml}</div>
               </td>
               <td style="padding: 12px 12px 4px 24px; text-align: right; width: 45px;">${discountHtml}</td>
               <td style="padding: 12px 4px 4px 0; text-align: right; font-weight: 600; color: #7f8c8d; width: 65px;">$${formatNumber(subTotalBeforeTradeIn)}</td>
