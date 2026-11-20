@@ -135,8 +135,8 @@
     
     .drop-loading {
       position: absolute; top:0; left:0; width:100%; height:100%;
-      background: rgba(255,255,255,0.85); display: none;
-      justify-content: center; align-items: center; font-size: 10px; color: #5f6368; border-radius: 4px;
+      background: rgba(255,255,255,0.88); display: none;
+      justify-content: center; align-items: center; font-size: 10px; font-weight: 600; color: #5f6368; border-radius: 4px;
     }
 
     .btn { background-color: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; letter-spacing: 0.5px; transition: 0.2s; min-width: 110px; text-align: center; }
@@ -155,9 +155,16 @@
     .actions-top { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
 
     .history-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
+    table.history-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 820px; }
     table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     table.history-table th { background: #fff; color: #70757a; font-weight: 500; border-bottom: 2px solid #ddd; white-space: nowrap; }
+    
+    /* ⭐ 日期欄強制不換行 */
+    table.history-table th:nth-child(2),
+    table.history-table td:nth-child(2) {
+      white-space: nowrap;
+      min-width: 86px;
+    }
     
     #historyTbody tr { transition: background-color 0.2s; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #historyTbody tr:hover { background-color: #f8f9fa; }
@@ -214,11 +221,11 @@
         <button class="btn" onclick="generateSelectedPreview()">REPORT</button>
       </div>
       <div class="filter-section">
-        <input type="text" id="searchInput" placeholder="🔍 搜尋姓名、品項或日期..." oninput="applyFilters()">
+        <input type="text" id="searchInput" placeholder="🔍 搜尋姓名、品項或日期..." oninput="applyFilters(false)">
         <div class="capsule-container" id="filterCapsules">
-          <button class="capsule active" onclick="setFilterCapsule('all', null, this)">全部</button>
-          <button class="capsule" onclick="setFilterCapsule('thisYear', null, this)">今年</button>
-          <button class="capsule" onclick="setFilterCapsule('lastYear', null, this)">去年</button>
+          <button class="capsule active" id="btnAll" onclick="resetAllFilters()">全部</button>
+          <button class="capsule" id="btnThisYear" onclick="toggleYearCapsule('thisYear')">今年</button>
+          <button class="capsule" id="btnLastYear" onclick="toggleYearCapsule('lastYear')">去年</button>
         </div>
         <div id="dragWarning">拖曳排序功能停用</div>
       </div>
@@ -294,10 +301,12 @@
     let generatedCanvasDataUrl = "";
     let allOrdersData = [];
     
-    let currentCapsuleFilter = 'all';
-    let currentCapsuleValue = null;
+    // ⭐ 複選膠囊狀態
+    let selectedYears = new Set();
+    let selectedNames = new Set();
 
     let dragSrcEl = null;
+    let beforeDragSequence = "";
     let editingRowIndex = null; 
     
     let touchTimer = null;
@@ -316,6 +325,11 @@
         return new Date(now - offset).toISOString().split('T')[0];
     }
 
+    function getCurrentDomSequenceStr() {
+        const rows = document.querySelectorAll('#historyTbody tr');
+        return Array.from(rows).map(r => r.getAttribute('data-sheet-row-index')).filter(Boolean).join(',');
+    }
+
     const trashIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 4V3H9v1H4v2h1v13c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V6h1V4h-5zm2 15H7V6h10v13z"/><path d="M9 8h2v9H9zm4 0h2v9h-2z"/></svg>`;
     const editIcon = `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
@@ -330,45 +344,77 @@
         overlay.style.display = show ? 'flex' : 'none'; 
     }
 
-    function setFilterCapsule(type, value, btnNode) {
-        document.querySelectorAll('.capsule').forEach(btn => btn.classList.remove('active'));
-        btnNode.classList.add('active');
-        currentCapsuleFilter = type;
-        currentCapsuleValue = value;
-        
-        if (type === 'all') {
-            document.getElementById('searchInput').value = '';
+    // ⭐ 膠囊切換與複選邏輯
+    function resetAllFilters() {
+        selectedYears.clear();
+        selectedNames.clear();
+        document.getElementById('searchInput').value = '';
+        updateCapsuleUI();
+        applyFilters(false);
+    }
+
+    function toggleYearCapsule(yearType) {
+        if (selectedYears.has(yearType)) {
+            selectedYears.delete(yearType);
+        } else {
+            selectedYears.add(yearType);
         }
-        applyFilters();
+        updateCapsuleUI();
+        applyFilters(selectedYears.size > 0 || selectedNames.size > 0);
+    }
+
+    function toggleNameCapsule(name) {
+        if (selectedNames.has(name)) {
+            selectedNames.delete(name);
+        } else {
+            selectedNames.add(name);
+        }
+        updateCapsuleUI();
+        applyFilters(selectedYears.size > 0 || selectedNames.size > 0);
+    }
+
+    function updateCapsuleUI() {
+        const hasAnyCapsule = selectedYears.size > 0 || selectedNames.size > 0;
+        document.getElementById('btnAll').classList.toggle('active', !hasAnyCapsule);
+        document.getElementById('btnThisYear').classList.toggle('active', selectedYears.has('thisYear'));
+        document.getElementById('btnLastYear').classList.toggle('active', selectedYears.has('lastYear'));
+
+        document.querySelectorAll('#filterCapsules .dynamic-name').forEach(btn => {
+            btn.classList.toggle('active', selectedNames.has(btn.dataset.name));
+        });
     }
 
     function updateNameCapsules() {
         const container = document.getElementById('filterCapsules');
-        const existingDynamic = container.querySelectorAll('.dynamic-name');
-        existingDynamic.forEach(el => el.remove());
+        container.querySelectorAll('.dynamic-name').forEach(el => el.remove());
 
         const uniqueNames = [...new Set(allOrdersData.map(item => item.Name ? item.Name.toString().trim() : '').filter(name => name !== ''))];
+
+        // 清除已不存在於資料庫的姓名選取狀態
+        for (const n of Array.from(selectedNames)) {
+            if (!uniqueNames.includes(n)) selectedNames.delete(n);
+        }
 
         uniqueNames.forEach(name => {
             const btn = document.createElement('button');
             btn.className = 'capsule dynamic-name';
+            btn.dataset.name = name;
             btn.innerText = name;
-            btn.onclick = function() { setFilterCapsule('name', name, this); };
-            
-            if (currentCapsuleFilter === 'name' && currentCapsuleValue === name) {
-                btn.classList.add('active');
-            }
+            btn.onclick = function() { toggleNameCapsule(name); };
             container.appendChild(btn);
         });
+
+        updateCapsuleUI();
     }
 
-    function applyFilters() {
+    function applyFilters(autoSelectAll = false) {
         const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
         const now = new Date();
         const currentYearStr = now.getFullYear().toString();
         const lastYearStr = (now.getFullYear() - 1).toString();
 
         const filteredData = allOrdersData.filter(item => {
+            // 1. 搜尋字串比對
             let matchSearch = true;
             if (searchText !== '') {
                 const name = (item.Name || '').toString().toLowerCase();
@@ -377,25 +423,30 @@
                 matchSearch = name.includes(searchText) || itemName.includes(searchText) || dateStr.includes(searchText);
             }
 
-            let matchCapsule = true;
-            if (currentCapsuleFilter === 'thisYear') {
-                if (!item.Date) matchCapsule = false;
-                else matchCapsule = item.Date.startsWith(currentYearStr);
-            } else if (currentCapsuleFilter === 'lastYear') {
-                if (!item.Date) matchCapsule = false;
-                else matchCapsule = item.Date.startsWith(lastYearStr);
-            } else if (currentCapsuleFilter === 'name') {
-                const itemName = item.Name ? item.Name.toString().trim() : '';
-                matchCapsule = (itemName === currentCapsuleValue);
+            // 2. 年份膠囊比對 (同組內為 OR)
+            let matchYear = true;
+            if (selectedYears.size > 0) {
+                const dateStr = item.Date ? item.Date.toString() : '';
+                const inThisYear = selectedYears.has('thisYear') && dateStr.startsWith(currentYearStr);
+                const inLastYear = selectedYears.has('lastYear') && dateStr.startsWith(lastYearStr);
+                matchYear = inThisYear || inLastYear;
             }
 
-            return matchSearch && matchCapsule;
+            // 3. 姓名膠囊比對 (同組內為 OR，與年份為 AND)
+            let matchName = true;
+            if (selectedNames.size > 0) {
+                const itemName = item.Name ? item.Name.toString().trim() : '';
+                matchName = selectedNames.has(itemName);
+            }
+
+            return matchSearch && matchYear && matchName;
         });
 
-        const isFilteringActive = (searchText !== '' || currentCapsuleFilter !== 'all');
+        const hasCapsuleSelected = selectedYears.size > 0 || selectedNames.size > 0;
+        const isFilteringActive = (searchText !== '' || hasCapsuleSelected);
         document.getElementById('dragWarning').style.display = isFilteringActive ? 'block' : 'none';
 
-        renderHistoryTable(filteredData, isFilteringActive);
+        renderHistoryTable(filteredData, isFilteringActive, autoSelectAll && hasCapsuleSelected);
     }
 
     function addItemRow(itemData = null) {
@@ -413,6 +464,7 @@
       row.className = 'item-row';
       row.dataset.imageId = itemData ? (itemData['Image ID'] || "") : "";
       row.dataset.imageUrl = itemData ? (itemData['Image URL'] || "") : "";
+      row.dataset.uploading = "false";
       
       const dateVal = itemData ? (itemData.Date ? itemData.Date.toString().split('T')[0] : '') : lastDate;
       const nameVal = itemData ? (itemData.Name || '') : lastName;
@@ -485,7 +537,7 @@
                 <input type="text" class="trade-input trade-in-name" placeholder="Item" value="${tnVal}" onclick="this.select()" title="換購品名 (選填)">
                 <input type="number" class="trade-input trade-in-amount" placeholder="$" value="${taVal}" inputmode="numeric" pattern="[0-9]*" onclick="this.select()" title="換購折抵金額 (選填)">
             </div>
-            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
+            <div class="drop-zone ${hasImageClass}" ${bgStyle} onclick="this.querySelector('input').click()" ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('dragover');" ondragleave="this.classList.remove('dragover');" ondrop="handleDrop(event, this)" title="上傳圖片">
               <span class="drop-text">+ Img</span>
               <div class="drop-loading">Up...</div>
               <input type="file" accept="image/*" style="display:none;" onchange="handleRowImageUpload(this, this.parentElement)">
@@ -508,6 +560,7 @@
         row.querySelector('.trade-in-amount').value = "";
         row.dataset.imageId = "";
         row.dataset.imageUrl = "";
+        row.dataset.uploading = "false";
         row.classList.remove('trade-expanded');
         const dropZone = row.querySelector('.drop-zone');
         dropZone.style.backgroundImage = 'none';
@@ -527,6 +580,7 @@
 
     function handleDrop(event, dropZone) {
       event.preventDefault();
+      event.stopPropagation();
       dropZone.classList.remove('dragover');
       if (event.dataTransfer.files && event.dataTransfer.files[0]) {
         uploadFileForDropZone(event.dataTransfer.files[0], dropZone);
@@ -539,16 +593,21 @@
       }
     }
 
+    // ⭐ 修復：上傳完成並取得網址後才亮起綠色打勾，避免提早按 SAVE 存入空白
     function uploadFileForDropZone(file, dropZone) {
       const row = dropZone.closest('.item-row');
       const reader = new FileReader();
       const loading = dropZone.querySelector('.drop-loading');
       
+      const prevBg = dropZone.style.backgroundImage;
+      const prevHasImg = dropZone.classList.contains('has-image');
+
+      row.dataset.uploading = "true";
+      dropZone.classList.remove('has-image');
       loading.style.display = 'flex'; 
       
       reader.onload = function(e) {
         dropZone.style.backgroundImage = `url(${e.target.result})`;
-        dropZone.classList.add('has-image'); 
 
         fetch(GAS_WEB_APP_URL, {
           method: 'POST',
@@ -557,24 +616,29 @@
         .then(res => res.text())
         .then(text => {
           loading.style.display = 'none';
+          row.dataset.uploading = "false";
           try {
             const res = JSON.parse(text);
-            if (res.success) {
+            if (res.success && res.url) {
               row.dataset.imageId = res.fileId;
               row.dataset.imageUrl = res.url;
+              dropZone.classList.add('has-image'); // 上傳真正成功才打勾
             } else {
-              alert('Upload failed: ' + res.error);
-              dropZone.style.backgroundImage = 'none';
-              dropZone.classList.remove('has-image');
+              alert('Upload failed: ' + (res.error || '未取得圖片網址'));
+              dropZone.style.backgroundImage = prevBg;
+              if (prevHasImg) dropZone.classList.add('has-image');
             }
           } catch(e) {
             alert('Upload error: 伺服器回傳錯誤，請確認 GAS 是否已「建立新版本」。');
-            dropZone.style.backgroundImage = 'none';
-            dropZone.classList.remove('has-image');
+            dropZone.style.backgroundImage = prevBg;
+            if (prevHasImg) dropZone.classList.add('has-image');
           }
         }).catch(err => {
           loading.style.display = 'none';
+          row.dataset.uploading = "false";
           alert('Network error: ' + err.message);
+          dropZone.style.backgroundImage = prevBg;
+          if (prevHasImg) dropZone.classList.add('has-image');
         });
       };
       reader.readAsDataURL(file);
@@ -585,6 +649,15 @@
       if (btnSave.classList.contains('saving')) return;
 
       const rows = document.querySelectorAll('.item-row');
+
+      // ⭐ 防呆：若尚有圖片正在上傳，阻止提前存檔
+      for (const row of rows) {
+          if (row.dataset.uploading === "true") {
+              alert('圖片正在上傳中，請等綠色打勾 ✔ 出現後再按 SAVE！');
+              return;
+          }
+      }
+
       const dataList = [];
       let isValid = true;
 
@@ -683,7 +756,7 @@
         if (res.success) { 
             allOrdersData = res.data; 
             updateNameCapsules(); 
-            applyFilters();       
+            applyFilters(selectedYears.size > 0 || selectedNames.size > 0);       
         } else { 
             throw new Error(res.error || "未知錯誤"); 
         }
@@ -715,6 +788,7 @@
         })
         .then(res => {
             if (res.success) {
+                if (editingRowIndex === sheetRowIndex) editingRowIndex = null;
                 fetchOrders();
                 showLoading(false);
             } else {
@@ -726,14 +800,24 @@
         });
     }
 
+    // ⭐ 防呆：過濾重複列號並避免無變動時重寫
     function saveSequenceToBackend() {
+        const afterSequenceStr = getCurrentDomSequenceStr();
+        if (!afterSequenceStr || afterSequenceStr === beforeDragSequence) {
+            return;
+        }
+
         showLoading(true, 'Saving new order...');
         
         const rows = document.querySelectorAll('#historyTbody tr');
+        const seen = new Set();
         const newSequence = [];
         rows.forEach(row => {
-            const indexValue = row.getAttribute('data-sheet-row-index');
-            if (indexValue) newSequence.push(parseInt(indexValue));
+            const indexValue = parseInt(row.getAttribute('data-sheet-row-index'));
+            if (!isNaN(indexValue) && !seen.has(indexValue)) {
+                seen.add(indexValue);
+                newSequence.push(indexValue);
+            }
         });
 
         fetch(GAS_WEB_APP_URL, {
@@ -744,6 +828,7 @@
         .then(text => JSON.parse(text))
         .then(res => {
             if (res.success) {
+                editingRowIndex = null;
                 fetchOrders(); 
                 showLoading(false);
             } else {
@@ -773,8 +858,10 @@
         return discountVal;
     }
 
-    function renderHistoryTable(dataToRender, isFilteringActive = false) {
-      document.getElementById('selectAll').checked = false;
+    function renderHistoryTable(dataToRender, isFilteringActive = false, shouldSelectAll = false) {
+      const selectAllBox = document.getElementById('selectAll');
+      const hasRows = dataToRender && dataToRender.length > 0;
+      selectAllBox.checked = shouldSelectAll && hasRows;
         
       const tbody = document.getElementById('historyTbody');
       tbody.innerHTML = '';
@@ -785,7 +872,7 @@
           tbody.classList.remove('is-filtered');
       }
 
-      if(!dataToRender || dataToRender.length === 0) {
+      if(!hasRows) {
         tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; color: #999; padding: 30px;">找不到符合的資料 (No records found)</td></tr>`; return;
       }
       
@@ -807,6 +894,7 @@
                 touchTimer = setTimeout(() => {
                     isDragging = true;
                     dragSrcEl = this;
+                    beforeDragSequence = getCurrentDomSequenceStr();
                     this.classList.add('dragging');
                     if (navigator.vibrate) navigator.vibrate(50);
                 }, 400); 
@@ -885,6 +973,7 @@
             
             tr.addEventListener('dragstart', function(e) {
                 dragSrcEl = this;
+                beforeDragSequence = getCurrentDomSequenceStr();
                 e.dataTransfer.effectAllowed = 'move';
                 this.classList.add('dragging');
             });
@@ -931,6 +1020,7 @@
                     row.style['border-bottom'] = '1px solid #eee';
                 });
                 saveSequenceToBackend();
+                dragSrcEl = null;
             });
         }
 
@@ -953,15 +1043,16 @@
         
         const tradeInAmountStr = tAmount > 0 ? `-$${formatNumber(tAmount)}` : '-';
         
-        // ⭐ 根據您的提醒，這裡加上數量 xN 的顯示
         let listPriceHtml = `$${priceStr}`;
         let qtyMatch = (item.Item || '').match(/ \(x(\d+)\)$/);
         if (qtyMatch && parseInt(qtyMatch[1]) > 1) {
             listPriceHtml = `$${priceStr} <span style="font-size:11px; color:#999; margin-left:2px;">x${qtyMatch[1]}</span>`;
         }
 
+        const checkedAttr = shouldSelectAll ? 'checked' : '';
+
         tr.innerHTML = `
-          <td><input type="checkbox" class="row-check" value="${item.sheetRowIndex}"></td>
+          <td><input type="checkbox" class="row-check" value="${item.sheetRowIndex}" ${checkedAttr} onchange="syncSelectAllCheckbox()"></td>
           <td>${displayDate}</td><td>${item.Name || ''}</td><td>${item.Item || ''}</td>
           <td>${listPriceHtml}</td><td>${displayDiscount}</td>
           <td style="color:#8a6d3b;">${tradeInInfo}</td><td style="color:#d9534f;">${tradeInAmountStr}</td>
@@ -976,8 +1067,14 @@
     }
 
     function toggleSelectAll(source) {
-      checkboxes = document.querySelectorAll('.row-check');
-      for (var i = 0, n = checkboxes.length; i < n; i++) checkboxes[i].checked = source.checked;
+      const checkboxes = document.querySelectorAll('.row-check');
+      for (let i = 0; i < checkboxes.length; i++) checkboxes[i].checked = source.checked;
+    }
+
+    function syncSelectAllCheckbox() {
+      const checkboxes = document.querySelectorAll('.row-check');
+      const checkedCount = document.querySelectorAll('.row-check:checked').length;
+      document.getElementById('selectAll').checked = (checkboxes.length > 0 && checkedCount === checkboxes.length);
     }
 
     function generateSelectedPreview() {
@@ -1045,7 +1142,6 @@
         const priceStr = formatNumber(item.Price);
         const itemTotalStr = formatNumber(itemTotal);
         
-        // ⭐ 報表也顯示數量 xN
         let qtyMatch = (item.Item || '').match(/ \(x(\d+)\)$/);
         let qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
         let reportPriceHtml = `$${priceStr}`;
